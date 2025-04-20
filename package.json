@@ -2,9 +2,9 @@
   "name": "whatsapp-frontend",
   "version": "1.0.0",
   "scripts": {
+    "legacy-install": "npm install --legacy-peer-deps",
     "dev": "vite",
     "build": "vite build",
-    "legacy-install": "npm install --legacy-peer-deps",
     "preview": "vite preview"
   },
   "dependencies": {
