@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { io } from 'socket.io-client'
 import QRCode from 'qrcode.react'
 
-const socket = io('http://localhost:5000')
+const socket = io('https://backend-4duv.onrender.com')
 
 export default function App() {
   const [qr, setQr] = useState('')
