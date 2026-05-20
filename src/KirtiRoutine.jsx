@@ -88,7 +88,7 @@ const SECTION_COLORS = {
   '🌙 रात — Wind Down': { bg:'#f3e5f5', accent:'#6a1b9a' },
 }
 
-const STORAGE_KEY = 'kirti_routine_v2'
+const STORAGE_KEY = 'kirti_routine_v1'
 const DEF_SETTINGS = { dayStart:'4:30 AM', dayEnd:'9:50 PM', actualStart:'' }
 
 function loadState() {
