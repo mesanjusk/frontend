@@ -40,57 +40,118 @@ const AREA_META = {
   '👥': { label:'Friends',   bg:'#e8f5e9', color:'#1b5e20' },
 }
 
+// ── Family Calendar (shared across all members)
+const FAMILY_CAL_KEY = 'family_calendar_v1'
+const DEFAULT_CAL_EVENTS = [
+  { id:1,  date:'01-12', label:'🧁 किर्ती का जन्मदिन' },
+  { id:2,  date:'01-31', label:'💞 भूमि-मुकेश Anniversary' },
+  { id:3,  date:'02-03', label:'💞 किर्ती-संजू Anniversary' },
+  { id:4,  date:'03-16', label:'🧁 अनिता जन्मदिन' },
+  { id:5,  date:'03-22', label:'🧁 सपना जन्मदिन' },
+  { id:6,  date:'10-09', label:'🧁 संजू का जन्मदिन' },
+  { id:7,  date:'12-06', label:'🧁 भूमि जन्मदिन' },
+  { id:8,  date:'12-19', label:'💞 सपना-अमर Anniversary' },
+  { id:9,  date:'12-30', label:'🧁 तम्मना जन्मदिन' },
+]
+function loadCalEvents() {
+  try { const s = localStorage.getItem(FAMILY_CAL_KEY); if (s) return JSON.parse(s) } catch {}
+  return DEFAULT_CAL_EVENTS
+}
+function saveCalEvents(ev) {
+  try { localStorage.setItem(FAMILY_CAL_KEY, JSON.stringify(ev)) } catch {}
+}
+function parseCalText(text) {
+  const MONTHS = {january:1,february:2,march:3,april:4,may:5,june:6,july:7,august:8,september:9,october:10,november:11,december:12,jan:1,feb:2,mar:3,apr:4,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12}
+  return text.trim().split('\n').filter(l=>l.trim()).map((line,i)=>{
+    const parts = line.trim().split(/\s+/)
+    const day = parseInt(parts[0])
+    const month = MONTHS[parts[1]?.toLowerCase()]
+    if(!day||!month) return null
+    const label = parts.slice(2).join(' ').trim()
+    if(!label) return null
+    return { id: Date.now()+i, date:`${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`, label }
+  }).filter(Boolean)
+}
+
+// ── Day Colors (Vedic Astrology weekday lords)
+const DAY_COLORS = [
+  { day:'रविवार',   en:'Sunday',    color:'#d46a10', hex:'#d46a10', name:'नारंगी / सुनहरा', god:'☀️ सूर्य', outfits:['Orange kurta / shirt','Copper accessories','Golden dupatta / tie'], avoid:'काला / नेवी नीला' },
+  { day:'सोमवार',   en:'Monday',    color:'#90a4ae', hex:'#90a4ae', name:'सफेद / क्रीम / सिल्वर', god:'🌙 चंद्र', outfits:['White kurta / shirt','Cream colored outfit','Silver accessories'], avoid:'काला / गाढ़ा लाल' },
+  { day:'मंगलवार',  en:'Tuesday',   color:'#c62828', hex:'#c62828', name:'लाल / गुलाबी / कोरल', god:'🔴 मंगल', outfits:['Red kurta / shirt','Coral combination','Pink accessories'], avoid:'हरा / सफेद' },
+  { day:'बुधवार',   en:'Wednesday', color:'#2e7d32', hex:'#2e7d32', name:'हरा / Grass Green', god:'💚 बुध', outfits:['Green kurta / shirt','Olive combination','Jade accessories'], avoid:'लाल / नारंगी' },
+  { day:'गुरुवार',  en:'Thursday',  color:'#f9a825', hex:'#f9a825', name:'पीला / केसरी / सुनहरा', god:'🟡 बृहस्पति', outfits:['Yellow kurta / shirt','Saffron combination','Gold accessories'], avoid:'काला / नेवी' },
+  { day:'शुक्रवार', en:'Friday',    color:'#e91e63', hex:'#e91e63', name:'सफेद / गुलाबी / हल्का नीला', god:'🌸 शुक्र', outfits:['White or pink outfit','Light blue combination','Diamond / pearl accessories'], avoid:'काला / गाढ़ा' },
+  { day:'शनिवार',   en:'Saturday',  color:'#263238', hex:'#263238', name:'काला / नेवी नीला / बैंगनी', god:'🪐 शनि', outfits:['Black / dark blue kurta','Navy combination','Iron / dark accessories'], avoid:'नारंगी / लाल' },
+]
+
+// ── Sanju-specific data
+const SANJU_MEALS = [
+  { id:0, day:'रविवार',   breakfast:'ओट्स + केला + 1 कप हरी चाय (नो शक्कर)',          lunch:'2 रोटी + मूंग दाल + सलाद + भिंडी', dinner:'दलिया खिचड़ी + दही (हल्का)',          tip:'☀️ सूर्य दिवस — गेहूं, गुड़, Vitamin D' },
+  { id:1, day:'सोमवार',   breakfast:'दलिया + सेब + दूध (कम शक्कर)',                     lunch:'2 रोटी + अरहर दाल + लौकी + सलाद',  dinner:'खिचड़ी + छाछ',                          tip:'🌙 चंद्र दिवस — सफेद foods, चावल, दूध शुभ' },
+  { id:2, day:'मंगलवार',  breakfast:'मूंग दाल चीला 2 + हरी चटनी',                       lunch:'2 रोटी + मसूर दाल + गाजर-मटर',    dinner:'सूप + 2 Toast (हल्का)',                  tip:'🔴 मंगल दिवस — Protein लें, Carrot/Pomegranate' },
+  { id:3, day:'बुधवार',   breakfast:'Green Moong Sprouts + Seasonal Fruit + Tea',       lunch:'2 रोटी + पालक सब्जी + दाल + सलाद', dinner:'मूंग दाल + चावल (Budh = Green foods)', tip:'💚 बुध दिवस — पालक, मेथी, हरी सब्जी — Business Day!' },
+  { id:4, day:'गुरुवार',  breakfast:'बेसन चीला 2 + दही',                                 lunch:'2 रोटी + चना दाल + आलू-गोभी',      dinner:'दाल सूप + 1 रोटी',                      tip:'🟡 गुरु दिवस — पीला खाना: चना, हल्दी, केला' },
+  { id:5, day:'शुक्रवार', breakfast:'पोहा + 1 संतरा + चाय',                              lunch:'2 रोटी + तोरई/लौकी + दाल',          dinner:'रागी खिचड़ी + दही',                      tip:'🌸 शुक्र दिवस — दूध-दही, मिठाई थोड़ी, Client Relations!' },
+  { id:6, day:'शनिवार',   breakfast:'उपमा + केला + काली चाय (नो milk)',                  lunch:'2 रोटी + काला चना + मेथी सब्जी',   dinner:'दलिया + वेजिटेबल सूप',                  tip:'🪐 शनि दिवस — उड़द दाल, काला अनाज, तिल' },
+]
+
+const SANJU_DAY_TIPS = [
+  'Singh Lagna = Orange/Gold आपका Power Color। Business meetings में गाढ़ा Orange impressive!',
+  'सोमवार = चंद्र। White + Silver combination से Client Trust बढ़ता है।',
+  'मंगलवार = Energy Day! Red tie / dupatta से Confidence + Authority।',
+  'Budh Dasha + बुधवार = 🎯 Perfect combo! हरा + Silver = Business Deals के लिए BEST day!',
+  'गुरुवार = Guru ग्रह। Yellow Kurta + Gold accessories = Wisdom + Prosperity vibes।',
+  'शुक्रवार = Charm Day! White/Light color से Client Relations + Team morale बेहतर।',
+  'शनिवार = Shani दिवस। Blue/Black = Discipline + Authority in office।',
+]
+
 const IT = [
-  { id:1,  sec:'🌅 सुबह — Spiritual', time:'5:00 AM', task:'उठें — Phone नहीं छूना',                        tags:['🕉️'],        pinned:false, skippable:false },
-  { id:2,  sec:'🌅 सुबह — Spiritual', time:'5:02 AM', task:'तांबे के लोटे से पानी — 2 गिलास',              tags:['🏥'],        pinned:false, skippable:false },
-  { id:3,  sec:'🌅 सुबह — Spiritual', time:'5:05 AM', task:'5 तुलसी के पत्ते खाएं',                       tags:['🏥','🕉️'],  pinned:false, skippable:true  },
-  { id:4,  sec:'🌅 सुबह — Spiritual', time:'5:10 AM', task:'सूर्य दिशा में 5 मिनट मौन',                   tags:['🕉️'],        pinned:false, skippable:true  },
-  { id:5,  sec:'🌅 सुबह — Spiritual', time:'5:15 AM', task:"'ॐ नमः शिवाय' — 21 बार",                      tags:['🕉️','🧠'],  pinned:false, skippable:true  },
-  { id:6,  sec:'🌅 सुबह — Spiritual', time:'5:18 AM', task:"'ॐ गं गणपतये नमः' — 21 बार",                  tags:['🕉️','🧠'],  pinned:false, skippable:true  },
-  { id:7,  sec:'🌅 सुबह — Spiritual', time:'5:22 AM', task:'सूर्य नमस्कार — 12 बार',                      tags:['🏥','⚡'],    pinned:false, skippable:true  },
-  { id:8,  sec:'🌅 सुबह — Spiritual', time:'5:37 AM', task:'अनुलोम विलोम — 10 मिनट',                      tags:['🏥','🧠'],  pinned:false, skippable:true  },
-  { id:9,  sec:'🌅 सुबह — Spiritual', time:'5:47 AM', task:'Morning Walk — 30 मिनट',                      tags:['🏥','⚡'],    pinned:false, skippable:true  },
-  { id:10, sec:'🌅 सुबह — Spiritual', time:'6:20 AM', task:"सूर्य को जल + 'ॐ घृणि सूर्याय नमः' 7 बार",  tags:['🕉️'],        pinned:false, skippable:true  },
-  { id:11, sec:'🌅 सुबह — Spiritual', time:'6:25 AM', task:'तुलसी को पानी + BP Check',                    tags:['🏥','🕉️'],  pinned:false, skippable:false },
-  { id:12, sec:'⭐ Deep Work Block',  time:'6:30 AM', task:'नाश्ता — घर का, हल्का, कम नमक',              tags:['🏥'],        pinned:false, skippable:false },
-  { id:13, sec:'⭐ Deep Work Block',  time:'7:00 AM', task:'DEEP WORK — Phone Silent, Face Down',          tags:['🧠','💼'],  pinned:true,  skippable:false },
-  { id:14, sec:'⭐ Deep Work Block',  time:'7:00 AM', task:'माही Brand / IT Product / Business Strategy', tags:['💼','👨‍👩‍👧'],  pinned:false, skippable:true  },
-  { id:15, sec:'⭐ Deep Work Block',  time:'8:00 AM', task:'New Ideas — Evaluate करें (शुरू नहीं)',        tags:['💼','🧠'],  pinned:false, skippable:true  },
-  { id:16, sec:'⭐ Deep Work Block',  time:'8:30 AM', task:'Accounts — Strategic Review (30 मिनट)',        tags:['💰'],        pinned:false, skippable:true  },
-  { id:17, sec:'⭐ Deep Work Block',  time:'9:00 AM', task:'Diary — आज के सिर्फ 3 Goals लिखें',           tags:['🧠','💼'],  pinned:false, skippable:true  },
-  { id:18, sec:'⭐ Deep Work Block',  time:'9:45 AM', task:'Office के लिए निकलें',                        tags:['💼'],        pinned:false, skippable:false },
-  { id:19, sec:'💼 Office — सुबह',   time:'10:30 AM',task:'Staff Briefing + Quality Check',               tags:['💼'],        pinned:false, skippable:true  },
-  { id:20, sec:'💼 Office — सुबह',   time:'10:50 AM',task:'Printing Orders — Review + Priority',          tags:['💼'],        pinned:false, skippable:true  },
-  { id:21, sec:'💼 Office — सुबह',   time:'11:00 AM',task:'Client Calls + Quotations + Follow ups',       tags:['💼','💰'],  pinned:false, skippable:true  },
-  { id:22, sec:'💼 Office — सुबह',   time:'11:45 AM',task:'Digital Marketing — Deep Work 45 मिनट',        tags:['💼','💰'],  pinned:false, skippable:true  },
-  { id:23, sec:'💼 Office — सुबह',   time:'12:15 PM',task:'Email + WhatsApp — Batch में Reply (15 min max)',tags:['💼'],      pinned:false, skippable:true  },
-  { id:24, sec:'🍛 Lunch + Rest',    time:'12:30 PM',task:'Lunch — Phone बंद, शांति से, Gratitude',       tags:['🏥','🕉️'],  pinned:false, skippable:false },
-  { id:25, sec:'🍛 Lunch + Rest',    time:'1:00 PM', task:'Micro Rest — आंखें बंद 15 मिनट',               tags:['🏥','⚡'],    pinned:false, skippable:true  },
-  { id:26, sec:'🍛 Lunch + Rest',    time:'1:15 PM', task:'पानी एक गिलास + 5 मिनट Stretch',              tags:['🏥'],        pinned:false, skippable:false },
-  { id:27, sec:'🚀 Office — दोपहर', time:'1:20 PM', task:'New Business Development + Client Visits',      tags:['💼','💰'],  pinned:false, skippable:true  },
-  { id:28, sec:'🚀 Office — दोपहर', time:'2:30 PM', task:'माही Brand Content Calendar update',            tags:['💼','👨‍👩‍👧'],  pinned:false, skippable:true  },
-  { id:29, sec:'🚀 Office — दोपहर', time:'2:45 PM', task:'Learning — Business Book 1 Chapter',            tags:['🧠'],        pinned:false, skippable:true  },
-  { id:30, sec:'🚀 Office — दोपहर', time:'4:15 PM', task:'DONE LIST Update — आज क्या Complete हुआ',      tags:['🧠','💼'],  pinned:false, skippable:true  },
-  { id:31, sec:'🚀 Office — दोपहर', time:'4:30 PM', task:'20-20-20 Eye Rule + पानी',                      tags:['🏥'],        pinned:false, skippable:false },
-  { id:32, sec:'📊 Office — शाम',   time:'5:30 PM', task:'Pending Orders + Quality Final Check',           tags:['💼'],        pinned:false, skippable:true  },
-  { id:33, sec:'📊 Office — शाम',   time:'6:00 PM', task:'Accounts Wrap + Cash Count',                    tags:['💰'],        pinned:false, skippable:true  },
-  { id:34, sec:'📊 Office — शाम',   time:'6:30 PM', task:'Next Day Planning + Staff Handover',             tags:['💼','🧠'],  pinned:false, skippable:true  },
-  { id:35, sec:'📊 Office — शाम',   time:'7:00 PM', task:'⚠️ Team को सौंपें — Office से निकलें (HARD STOP)', tags:['💼'],     pinned:true,  skippable:false },
-  { id:36, sec:'👥 Friends + Contacts',time:'7:10 PM',task:"1 Close Friend को Call — 'बस याद आया'",       tags:['👥'],        pinned:true,  skippable:false },
-  { id:37, sec:'👥 Friends + Contacts',time:'7:20 PM',task:'1 Relative को Check in — Weekly rotation',    tags:['❤️'],        pinned:false, skippable:true  },
-  { id:38, sec:'👥 Friends + Contacts',time:'7:30 PM',task:'JCI / Business Network — Quick call',          tags:['💼','👥'],  pinned:false, skippable:true  },
-  { id:39, sec:'👥 Friends + Contacts',time:'7:45 PM',task:'Cafe में दोस्त से मिलें (हफ्ते में 2-3 बार)', tags:['👥'],        pinned:false, skippable:true  },
-  { id:40, sec:'👥 Friends + Contacts',time:'8:15 PM',task:'घर की तरफ निकलें',                            tags:['👨‍👩‍👧'],        pinned:false, skippable:true  },
-  { id:41, sec:'👨‍👩‍👧 परिवार Time',    time:'8:30 PM', task:'घर पहुंचें — Fresh हों',                      tags:['🏥'],        pinned:false, skippable:false },
-  { id:42, sec:'👨‍👩‍👧 परिवार Time',    time:'8:40 PM', task:'बगीचे में पत्नी के साथ — 10 मिनट',            tags:['❤️','👨‍👩‍👧'],  pinned:true,  skippable:false },
-  { id:43, sec:'👨‍👩‍👧 परिवार Time',    time:'8:50 PM', task:'माही के साथ — 10 मिनट, उनकी बात सुनें',       tags:['👨‍👩‍👧'],        pinned:false, skippable:true  },
-  { id:44, sec:'👨‍👩‍👧 परिवार Time',    time:'9:00 PM', task:'Family Dinner — Phone नहीं, तीनों साथ',       tags:['👨‍👩‍👧','🏥'], pinned:true,  skippable:false },
-  { id:45, sec:'👨‍👩‍👧 परिवार Time',    time:'9:20 PM', task:'माही का Content देखें + Feedback',             tags:['👨‍👩‍👧','💼'],  pinned:false, skippable:true  },
-  { id:46, sec:'🕯️ Wind Down',       time:'9:30 PM', task:"दीपक जलाएं + 'ॐ' 7 बार",                      tags:['🕉️','❤️'],  pinned:false, skippable:true  },
-  { id:47, sec:'🕯️ Wind Down',       time:'9:40 PM', task:'Diary — कल के 3 Goals + आज की 3 अज्जी बातें', tags:['🧠','🕉️'],  pinned:true,  skippable:false },
-  { id:48, sec:'🕯️ Wind Down',       time:'9:55 PM', task:'Phone Silent — Screen Time खत्म',              tags:['🏥'],        pinned:false, skippable:true  },
-  { id:49, sec:'🕯️ Wind Down',       time:'10:00 PM',task:'पत्नी के साथ — 20 मिनट Quality Time',          tags:['❤️'],        pinned:false, skippable:true  },
-  { id:50, sec:'🕯️ Wind Down',       time:'10:30 PM',task:'सोएं — 6.5 घंटे अनिवार्य',                    tags:['🏥'],        pinned:true,  skippable:false },
+  // 🌅 सुबह — Spiritual (5:00 - 6:30 AM)
+  { id:1,  sec:'🌅 सुबह — Spiritual', time:'5:00 AM', task:'उठें — Phone नहीं, तांबे से 2 गिलास पानी + 5 तुलसी पत्ते', tags:['🕉️','🏥'], pinned:false, skippable:false, highImpact:false },
+  { id:4,  sec:'🌅 सुबह — Spiritual', time:'5:15 AM', task:'BP Check करें — रोज सुबह, डायरी में नोट करें (ज़रूरी)', tags:['🏥'], pinned:true, skippable:false, highImpact:true },
+  { id:5,  sec:'🌅 सुबह — Spiritual', time:'5:30 AM', task:"'ॐ घृणि सूर्याय नमः' 7 बार + 'ॐ गं गणपतये नमः' 21 बार — सूर्य दिशा में", tags:['🕉️','🧠'], pinned:false, skippable:true, highImpact:false },
+  { id:9,  sec:'🌅 सुबह — Spiritual', time:'5:45 AM', task:'सूर्य नमस्कार — 12 बार + अनुलोम विलोम 10 मिनट (BP Control के लिए ज़रूरी)', tags:['🏥','⚡'], pinned:false, skippable:false, highImpact:true },
+  { id:11, sec:'🌅 सुबह — Spiritual', time:'6:00 AM', task:'Morning Walk — 20 मिनट (BP + Energy सबसे अच्छा routine)', tags:['🏥','⚡'], pinned:false, skippable:true, highImpact:false },
+  { id:12, sec:'🌅 सुबह — Spiritual', time:'6:15 AM', task:'तुलसी को पानी + सूर्य को जल + पत्नी के साथ चाय (प्यार से दिन शुरू)', tags:['🕉️','❤️'], pinned:true, skippable:false, highImpact:true },
+  // ⭐ Deep Work Block (6:30 - 9:30 AM)
+  { id:14, sec:'⭐ Deep Work Block', time:'6:30 AM', task:'नाश्ता — घर का, कम नमक, कम तेल (BP diet)', tags:['🏥'], pinned:false, skippable:false, highImpact:false },
+  { id:15, sec:'⭐ Deep Work Block', time:'7:00 AM', task:'DEEP WORK — Phone Silent + Face Down (90 min) — 1 सबसे बड़ा Business Problem Solve', tags:['🧠','💼'], pinned:true, skippable:false, highImpact:true },
+  { id:18, sec:'⭐ Deep Work Block', time:'7:30 AM', task:'Printing + Digital Business — New Service / Market / Revenue Idea (30 min)', tags:['💼','💰'], pinned:false, skippable:true, highImpact:false },
+  { id:21, sec:'⭐ Deep Work Block', time:'8:00 AM', task:'Investment / Tax / Insurance — Monthly 15 min Review + Quarterly Revenue Track', tags:['💰'], pinned:false, skippable:true, highImpact:true },
+  { id:22, sec:'⭐ Deep Work Block', time:'8:15 AM', task:'Diary — आज के 3 Goals लिखें (80/20: कौन से 20% काम से 80% results?)', tags:['🧠','💼'], pinned:false, skippable:true, highImpact:true },
+  { id:23, sec:'⭐ Deep Work Block', time:'8:30 AM', task:'Business Book — 1 Chapter (Budh Dasha = बुद्धि का सबसे बड़ा समय)', tags:['🧠'], pinned:false, skippable:true, highImpact:false },
+  { id:24, sec:'⭐ Deep Work Block', time:'8:45 AM', task:'माही Brand Strategy — अगले 3 महीने का Content Plan Update', tags:['💼','👨‍👩‍👧'], pinned:false, skippable:true, highImpact:false },
+  { id:25, sec:'⭐ Deep Work Block', time:'9:00 AM', task:'Office के लिए निकलें — पत्नी को Goodbye करके जाएं (Connection = Energy)', tags:['💼','❤️'], pinned:false, skippable:false, highImpact:false },
+  // 💼 Office — सुबह (10:30 AM - 12:00 PM)
+  { id:26, sec:'💼 Office — सुबह', time:'10:30 AM', task:'Staff Morning Briefing — आज का Target + Quality Check + 1 person Training', tags:['💼'], pinned:false, skippable:true, highImpact:false },
+  { id:27, sec:'💼 Office — सुबह', time:'10:45 AM', task:'Top 3 Client Calls — नया Quote + Follow-up + Pending Payment', tags:['💼','💰'], pinned:false, skippable:true, highImpact:true },
+  { id:29, sec:'💼 Office — सुबह', time:'11:00 AM', task:'Digital Marketing — 30 मिनट Focus (Post / Ad / SEO / Instagram)', tags:['💼','💰'], pinned:false, skippable:true, highImpact:false },
+  { id:30, sec:'💼 Office — सुबह', time:'11:30 AM', task:'Email + WhatsApp Batch — 15 मिनट, फिर बंद', tags:['💼'], pinned:false, skippable:true, highImpact:false },
+  // 🍛 Lunch + Rest (2:00 PM)
+  { id:31, sec:'🍛 Lunch + Rest', time:'2:00 PM', task:'Lunch — Phone बंद, Gratitude, घर का खाना, कम नमक (BP Control)', tags:['🏥','🕉️'], pinned:false, skippable:false, highImpact:false },
+  { id:32, sec:'🍛 Lunch + Rest', time:'2:30 PM', task:'Micro Rest — आंखें बंद 15 मिनट + पानी + Stretch', tags:['🏥','⚡'], pinned:false, skippable:true, highImpact:false },
+  // 🚀 Office — दोपहर (2:45 - 5:30 PM)
+  { id:34, sec:'🚀 Office — दोपहर', time:'2:45 PM', task:'New Client Visit / Prospecting — 3 नए Leads (Revenue Growth)', tags:['💼','💰'], pinned:false, skippable:true, highImpact:false },
+  { id:35, sec:'🚀 Office — दोपहर', time:'3:00 PM', task:'Quarterly Revenue Target — आज कितना हुआ? Outstanding Payment — 1 Follow-up Call', tags:['💰'], pinned:false, skippable:true, highImpact:true },
+  { id:37, sec:'🚀 Office — दोपहर', time:'3:15 PM', task:'Vendor / Supplier — 1 Relationship Call (Negotiation / Deal)', tags:['💼','💰'], pinned:false, skippable:true, highImpact:false },
+  { id:39, sec:'🚀 Office — दोपहर', time:'3:30 PM', task:'DONE LIST — आज क्या Complete हुआ (Momentum) + 20-20-20 Eye Rule', tags:['🧠','💼'], pinned:false, skippable:true, highImpact:false },
+  { id:40, sec:'🚀 Office — दोपहर', time:'3:45 PM', task:'Business Idea Evaluate — नोट करें (10x thinking: क्या 10x Revenue आ सकती है?)', tags:['💼','🧠'], pinned:false, skippable:true, highImpact:false },
+  // 📊 Office — शाम (5:30 - 7:00 PM)
+  { id:41, sec:'📊 Office — शाम', time:'5:30 PM', task:'Pending Orders + Quality Final Check + Accounts Wrap (Cash + Daily P&L)', tags:['💼','💰'], pinned:false, skippable:true, highImpact:false },
+  { id:44, sec:'📊 Office — शाम', time:'5:45 PM', task:'कल का Plan — Staff Brief, Next Day Ready, Key Priority 1 लिखें', tags:['💼','🧠'], pinned:false, skippable:true, highImpact:false },
+  { id:45, sec:'📊 Office — शाम', time:'7:00 PM', task:'⚠️ HARD STOP — Office छोड़ें (10x Rule: समय से जाना = घर में प्यार)', tags:['💼'], pinned:true, skippable:false, highImpact:false },
+  // 👥 Friends + Contacts (7:00 - 8:30 PM)
+  { id:46, sec:'👥 Friends + Contacts', time:'7:00 PM', task:"1 Close Friend को Call — 'बस याद आया यार' (Relationship = Biggest Asset)", tags:['👥'], pinned:true, skippable:false, highImpact:false },
+  { id:48, sec:'👥 Friends + Contacts', time:'7:15 PM', task:'1 Relative + JCI Business Network — Quick Check-in / Message', tags:['❤️','💼'], pinned:false, skippable:true, highImpact:false },
+  // 👨‍👩‍👧 परिवार Time (8:30 - 10:30 PM)
+  { id:51, sec:'👨‍👩‍👧 परिवार Time', time:'8:30 PM', task:'घर पहुंचें — Fresh हों, Office Energy छोड़ें, पत्नी के साथ बगीचे में 10 min', tags:['🏥','❤️'], pinned:false, skippable:false, highImpact:false },
+  { id:53, sec:'👨‍👩‍👧 परिवार Time', time:'8:45 PM', task:'माही के साथ — NIFT update सुनें, Brand idea share करें', tags:['👨‍👩‍👧'], pinned:false, skippable:true, highImpact:false },
+  { id:54, sec:'👨‍👩‍👧 परिवार Time', time:'9:00 PM', task:'Family Dinner — Phone नहीं, तीनों साथ, Gratitude बोलें', tags:['👨‍👩‍👧','🏥'], pinned:true, skippable:false, highImpact:true },
+  // 🕯️ Wind Down (9:30 - 10:30 PM)
+  { id:56, sec:'🕯️ Wind Down', time:'9:30 PM', task:"दीपक जलाएं + 'ॐ' 7 बार + पत्नी के साथ 20 मिनट Quality Time", tags:['🕉️','❤️'], pinned:true, skippable:false, highImpact:true },
+  { id:57, sec:'🕯️ Wind Down', time:'9:45 PM', task:'Diary — कल के 3 Goals + आज की 3 सबसे अच्छी बातें (Reflection = Growth)', tags:['🧠','🕉️'], pinned:true, skippable:false, highImpact:true },
+  { id:58, sec:'🕯️ Wind Down', time:'10:00 PM', task:'Phone Silent — Screen Time खत्म (Eye + BP both need this)', tags:['🏥'], pinned:false, skippable:true, highImpact:false },
+  { id:60, sec:'🕯️ Wind Down', time:'10:30 PM', task:'सोएं — 6.5 घंटे (कल 5 AM उठना है — नींद = सबसे बड़ा Investment)', tags:['🏥'], pinned:true, skippable:false, highImpact:false },
 ]
 const INITIAL_TASKS = IT.map(t => ({ ...t, section: t.sec }))
 
@@ -103,7 +164,7 @@ const SECTION_COLORS = {
   '📊 Office — शाम':     { bg:'#ede7f6', accent:'#4a148c' },
   '👥 Friends + Contacts':{ bg:'#e8f5e9', accent:'#1b5e20' },
   '👨‍👩‍👧 परिवार Time': { bg:'#fce4ec', accent:'#880e4f' },
-  '🕯️ Wind Down':   { bg:'#fbe9e7', accent:'#7b0000' },
+  '🕯️ Wind Down':        { bg:'#fbe9e7', accent:'#7b0000' },
 }
 
 const STORAGE_KEY = 'sanju_routine_v2'
@@ -139,9 +200,12 @@ export default function Routine() {
   const [selectMode, setSelectMode] = useState(false)
   const [selected,   setSelected]   = useState(new Set())
   const [mergeForm,  setMergeForm]  = useState(null)
+  const [calEvents, setCalEvents] = useState(loadCalEvents)
+  const [calInput,  setCalInput]  = useState('')
   const editRef = useRef(null)
 
   useEffect(() => { saveState({ tasks, done, settings }) }, [tasks, done, settings])
+  useEffect(() => { saveCalEvents(calEvents) }, [calEvents])
 
   const sections   = [...new Set(tasks.map(t => t.section))]
   const todayDone  = Object.values(done).filter(Boolean).length
@@ -254,9 +318,9 @@ export default function Routine() {
   const resetAll = () => { setTasks(INITIAL_TASKS); setDone({}); setSettings(DEF_SETTINGS); setConfirmReset(false) }
   const sc = sec => SECTION_COLORS[sec] || { bg:'#f9f9f9', accent:'#666' }
 
-  const filterAreas = ['ALL', ...Object.keys(AREA_META)]
+  const filterAreas = ['ALL', '⚡ Impact', ...Object.keys(AREA_META)]
   const filtered = tasks.filter(t => {
-    const aOk = activeFilter === 'ALL' || t.tags.includes(activeFilter)
+    const aOk = activeFilter === 'ALL' || (activeFilter === '⚡ Impact' ? t.highImpact : t.tags.includes(activeFilter))
     const sOk = !searchQ || t.task.toLowerCase().includes(searchQ.toLowerCase()) || t.time.includes(searchQ)
     return aOk && sOk
   })
@@ -287,9 +351,9 @@ export default function Routine() {
       </header>
 
       {/* Nav */}
-      <nav style={S.nav}>
-        {[['today','📋 आज'],['weekly','📅 Weekly'],['mantras','🕉️ Mantras']].map(([v,l])=>(
-          <button key={v} onClick={()=>setView(v)} style={{...S.navBtn,...(view===v?S.navActive:{})}}>{l}</button>
+      <nav style={{...S.nav, overflowX:'auto', scrollbarWidth:'none', WebkitOverflowScrolling:'touch'}}>
+        {[['today','📋 आज'],['weekly','📅 Weekly'],['mantras','🕉️ Mantras'],['outfit','👗 Outfit'],['calendar','📆 Calendar'],['meals','🍽️ Meals']].map(([v,l])=>(
+          <button key={v} onClick={()=>setView(v)} style={{...S.navBtn, whiteSpace:'nowrap', ...(view===v?S.navActive:{})}}>{l}</button>
         ))}
       </nav>
 
@@ -386,7 +450,7 @@ export default function Routine() {
         <div style={S.filterRow}>
           {filterAreas.map(a=>(
             <button key={a} onClick={()=>setActiveFilter(a)}
-              style={{...S.filterChip,...(activeFilter===a?{background:a==='ALL'?'#d46a10':(AREA_META[a]?.color||'#333'),color:'#fff'}:{})}}>
+              style={{...S.filterChip,...(activeFilter===a?{background:a==='ALL'?'#d46a10':a==='⚡ Impact'?'#e65100':(AREA_META[a]?.color||'#333'),color:'#fff'}:{})}}>
               {a==='ALL'?'All':a}
             </button>
           ))}
@@ -419,7 +483,7 @@ export default function Routine() {
                       ...(status==='missed'?S.taskMissed:{}),
                       ...(dragOverId===t.id?S.taskDragOver:{}),
                       ...(isSel?S.taskSelected:{}),
-                      borderLeftColor: status==='missed'?'#b71c1c':c.accent,
+                      borderLeft: t.highImpact ? '4px solid #ffd700' : `4px solid ${status==='missed'?'#b71c1c':c.accent}`,
                     }}>
                     {editingId===t.id ? (
                       <div style={S.editBox}>
@@ -454,6 +518,7 @@ export default function Routine() {
                         <div style={S.taskContent}>
                           <div style={S.taskTime}>
                             {t.time} {t.pinned&&'📌'}
+                            {t.highImpact && <span style={{fontSize:10,background:'#ffd700',color:'#7b3f00',padding:'1px 5px',borderRadius:6,fontWeight:800}}>⚡ Impact</span>}
                             {!t.skippable && <span style={S.reqDot}>⛔</span>}
                             {status==='missed'  && <span style={S.missedBadge}>MISSED</span>}
                             {status==='skipped' && <span style={S.skippedBadge}>⏭️ SKIP</span>}
@@ -530,6 +595,130 @@ export default function Routine() {
 
       {view==='weekly'  && <WeeklyView />}
       {view==='mantras' && <MantrasView />}
+
+      {view==='outfit' && (() => {
+        const dc = DAY_COLORS[new Date().getDay()]
+        const tip = SANJU_DAY_TIPS[new Date().getDay()]
+        return (
+          <div style={{padding:'16px 14px'}}>
+            <div style={{fontSize:20,fontWeight:800,color:'#d46a10',marginBottom:4}}>👗 आज का Outfit — संजू</div>
+            <div style={{fontSize:12,color:'#888',marginBottom:16}}>Vedic Astrology based daily color guide</div>
+            <div style={{background:`linear-gradient(135deg,${dc.color},${dc.color}cc)`,borderRadius:16,padding:20,color:'#fff',marginBottom:16,textAlign:'center'}}>
+              <div style={{fontSize:28,marginBottom:4}}>{dc.god}</div>
+              <div style={{fontSize:16,fontWeight:800}}>{dc.day} — {dc.en}</div>
+              <div style={{fontSize:22,fontWeight:900,marginTop:8,marginBottom:4}}>{dc.name}</div>
+              <div style={{fontSize:13,opacity:0.9}}>आज का शुभ रंग</div>
+            </div>
+            <div style={{background:'#fff',borderRadius:16,padding:16,marginBottom:12,border:'2px solid #eee'}}>
+              <div style={{fontSize:14,fontWeight:700,color:'#333',marginBottom:10}}>👔 Outfit Suggestions:</div>
+              {dc.outfits.map((o,i)=>(
+                <div key={i} style={{display:'flex',alignItems:'center',gap:8,padding:'8px 0',borderBottom:i<dc.outfits.length-1?'1px solid #f0f0f0':'none'}}>
+                  <div style={{width:12,height:12,borderRadius:'50%',background:dc.color,flexShrink:0}}/>
+                  <span style={{fontSize:14}}>{o}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{background:'#fff8f0',borderRadius:16,padding:16,marginBottom:12,border:'2px solid #d46a10'}}>
+              <div style={{fontSize:13,fontWeight:700,color:'#7b0000',marginBottom:6}}>🌟 Personal Tip — Budh Dasha + Singh Lagna:</div>
+              <div style={{fontSize:13,color:'#333',lineHeight:1.6}}>{tip}</div>
+            </div>
+            <div style={{background:'#fff0f0',borderRadius:12,padding:12,border:'1px solid #ffcdd2'}}>
+              <div style={{fontSize:13,fontWeight:700,color:'#c62828',marginBottom:4}}>❌ आज Avoid करें:</div>
+              <div style={{fontSize:13,color:'#555'}}>{dc.avoid}</div>
+            </div>
+          </div>
+        )
+      })()}
+
+      {view==='calendar' && (() => {
+        const today = new Date()
+        const MONTH_HI = ['','जनवरी','फरवरी','मार्च','अप्रैल','मई','जून','जुलाई','अगस्त','सितंबर','अक्टूबर','नवंबर','दिसंबर']
+        const withDays = calEvents.map(e=>{
+          const [mm,dd]=e.date.split('-').map(Number)
+          const next=new Date(today.getFullYear(),mm-1,dd)
+          if(next<today&&!(next.getMonth()===today.getMonth()&&next.getDate()===today.getDate())) next.setFullYear(today.getFullYear()+1)
+          return{...e,daysAway:Math.round((next-today)/(864e5)),mm,dd}
+        }).sort((a,b)=>a.daysAway-b.daysAway)
+        const upcoming=withDays.filter(e=>e.daysAway<=60)
+        const byMonth={}
+        calEvents.forEach(e=>{const mm=parseInt(e.date.split('-')[0]);if(!byMonth[mm])byMonth[mm]=[];byMonth[mm].push(e)})
+        const parsed = parseCalText(calInput)
+        return (
+          <div style={{padding:'16px 14px'}}>
+            <div style={{fontSize:20,fontWeight:800,color:'#d46a10',marginBottom:16}}>📆 परिवार Calendar</div>
+            {upcoming.length>0&&<>
+              <div style={{fontSize:13,fontWeight:700,color:'#555',marginBottom:10}}>🔔 अगले 60 दिनों में ({upcoming.length})</div>
+              {upcoming.map(e=>(
+                <div key={e.id} style={{background:e.daysAway<=7?'#fff3e0':'#f9f9f9',border:`2px solid ${e.daysAway<=7?'#d46a10':'#ddd'}`,borderRadius:12,padding:'12px 14px',marginBottom:8}}>
+                  <div style={{fontSize:15,fontWeight:700}}>{e.label}</div>
+                  <div style={{fontSize:12,color:'#888',marginTop:4}}>{MONTH_HI[e.mm]} {e.dd} • {e.daysAway===0?'🎉 आज!':`${e.daysAway} दिन बाद`}</div>
+                </div>
+              ))}
+              <div style={{height:8}}/>
+            </>}
+            <div style={{fontSize:13,fontWeight:700,color:'#555',marginBottom:10}}>📅 सभी Events ({calEvents.length})</div>
+            {Object.keys(byMonth).sort((a,b)=>+a-+b).map(mm=>(
+              <div key={mm} style={{marginBottom:12}}>
+                <div style={{fontSize:11,fontWeight:800,color:'#d46a10',marginBottom:6,letterSpacing:1}}>{MONTH_HI[+mm].toUpperCase()}</div>
+                {byMonth[mm].sort((a,b)=>a.date.localeCompare(b.date)).map(e=>(
+                  <div key={e.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 10px',background:'#fff',border:'1px solid #eee',borderRadius:8,marginBottom:4}}>
+                    <span style={{fontSize:14}}>{parseInt(e.date.split('-')[1])} — {e.label}</span>
+                    <button onClick={()=>setCalEvents(prev=>prev.filter(x=>x.id!==e.id))} style={{background:'none',border:'none',cursor:'pointer',fontSize:18,color:'#bbb',padding:'0 4px'}}>✕</button>
+                  </div>
+                ))}
+              </div>
+            ))}
+            <div style={{marginTop:16,padding:14,background:'#fff8f0',borderRadius:12,border:'2px solid #d46a10'}}>
+              <div style={{fontSize:13,fontWeight:700,color:'#7b0000',marginBottom:4}}>➕ New Event जोड़ें</div>
+              <div style={{fontSize:11,color:'#888',marginBottom:8}}>Format: "12 January 🧁 Kirti" (एक line = एक event)</div>
+              <textarea value={calInput} onChange={e=>setCalInput(e.target.value)}
+                placeholder={'12 January 🧁Kirti\n31 January 💞 Bhumi-Mukesh\n03 February 💞 Kirti-Sanju'}
+                style={{width:'100%',padding:'10px',borderRadius:8,border:'1px solid #ddd',fontSize:12,fontFamily:'inherit',minHeight:80,boxSizing:'border-box',resize:'vertical'}}/>
+              <button onClick={()=>{if(parsed.length>0){setCalEvents(prev=>[...prev,...parsed]);setCalInput('')}}}
+                style={{marginTop:8,width:'100%',padding:'10px',background:parsed.length>0?'#d46a10':'#bbb',color:'#fff',border:'none',borderRadius:8,fontWeight:700,fontSize:14,cursor:parsed.length>0?'pointer':'not-allowed'}}>
+                ✓ Calendar में जोड़ें {parsed.length>0?`(${parsed.length} events)`:''}
+              </button>
+            </div>
+          </div>
+        )
+      })()}
+
+      {view==='meals' && (() => {
+        const todayIdx = new Date().getDay()
+        const meal = SANJU_MEALS[todayIdx]
+        return (
+          <div style={{padding:'16px 14px'}}>
+            <div style={{fontSize:20,fontWeight:800,color:'#d46a10',marginBottom:4}}>🍽️ Meals — संजू</div>
+            <div style={{fontSize:12,color:'#888',marginBottom:16}}>BP Control + Budh Dasha + Singh Lagna आधारित</div>
+            <div style={{background:'linear-gradient(135deg,#d46a10,#7b0000)',borderRadius:16,padding:16,color:'#fff',marginBottom:16}}>
+              <div style={{fontSize:13,opacity:0.9}}>आज: {meal.day}</div>
+              <div style={{fontSize:15,fontWeight:800,marginTop:4}}>{meal.tip}</div>
+            </div>
+            {[['🌅 नाश्ता (Breakfast)',meal.breakfast,'7:00 AM'],['🍛 दोपहर का खाना (Lunch)',meal.lunch,'2:00 PM'],['🌙 रात का खाना (Dinner)',meal.dinner,'9:00 PM']].map(([title,content,time])=>(
+              <div key={title} style={{background:'#fff',borderRadius:12,padding:16,marginBottom:12,border:'1px solid #eee'}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                  <div style={{fontSize:14,fontWeight:700}}>{title}</div>
+                  <div style={{fontSize:11,color:'#d46a10',fontWeight:600}}>{time}</div>
+                </div>
+                <div style={{fontSize:13,color:'#444',lineHeight:1.6}}>{content}</div>
+              </div>
+            ))}
+            <div style={{background:'#fff0f0',borderRadius:12,padding:12,border:'1px solid #ffcdd2'}}>
+              <div style={{fontSize:12,fontWeight:700,color:'#c62828',marginBottom:6}}>⚠️ BP Control Rules (रोज़ याद रखें):</div>
+              <div style={{fontSize:12,color:'#555',lineHeight:1.8}}>❌ नमक कम करें (2g/day max){'\n'}❌ तला हुआ खाना avoid करें{'\n'}✅ पानी 8-10 गिलास{'\n'}✅ पोटेशियम: केला, पालक, दही{'\n'}✅ रात का खाना 9 PM से पहले</div>
+            </div>
+            <div style={{marginTop:16}}>
+              <div style={{fontSize:13,fontWeight:700,color:'#555',marginBottom:8}}>📅 Weekly Meal Plan</div>
+              {SANJU_MEALS.map((m,i)=>(
+                <div key={i} style={{background:i===todayIdx?'#fff8f0':'#f9f9f9',border:`1px solid ${i===todayIdx?'#d46a10':'#eee'}`,borderRadius:10,padding:10,marginBottom:6}}>
+                  <div style={{fontSize:12,fontWeight:800,color:i===todayIdx?'#d46a10':'#333',marginBottom:4}}>{m.day} {i===todayIdx?'← आज':''}</div>
+                  <div style={{fontSize:11,color:'#666'}}>{m.breakfast}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      })()}
 
       {showCelebrate && (
         <div style={S.celebOverlay} onClick={()=>setShowCelebrate(false)}>
@@ -628,7 +817,7 @@ const S = {
   progressFill: { background:'#ffd700', height:'100%', borderRadius:8, transition:'width 0.4s' },
   progressText: { fontSize:13, opacity:0.85, marginTop:5, textAlign:'right' },
   nav:          { display:'flex', background:'#fff', borderBottom:'2px solid #f0e8de', position:'sticky', top:0, zIndex:10 },
-  navBtn:       { flex:1, padding:'13px 4px', border:'none', background:'transparent', fontSize:15, fontWeight:600, color:'#888', cursor:'pointer' },
+  navBtn:       { flex:1, padding:'13px 4px', border:'none', background:'transparent', fontSize:14, fontWeight:600, color:'#888', cursor:'pointer' },
   navActive:    { color:'#d46a10', borderBottom:'3px solid #d46a10' },
   // Settings
   setWrap:      { margin:'8px 10px 0', borderRadius:12, overflow:'hidden', border:'1.5px solid #f0e0cf' },
