@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Routine from './Routine'
 import MahiRoutine from './MahiRoutine'
 import KirtiRoutine from './KirtiRoutine'
@@ -11,6 +11,17 @@ const MEMBERS = [
 
 export default function App() {
   const [active, setActive] = useState(null)
+  const [showExitConfirm, setShowExitConfirm] = useState(false)
+
+  useEffect(() => {
+    window.history.pushState(null, '', window.location.pathname)
+    const handler = () => {
+      window.history.pushState(null, '', window.location.pathname)
+      setShowExitConfirm(true)
+    }
+    window.addEventListener('popstate', handler)
+    return () => window.removeEventListener('popstate', handler)
+  }, [])
 
   if (active === 'sanju') return <PageWrap onBack={()=>setActive(null)}><Routine /></PageWrap>
   if (active === 'kirti') return <PageWrap onBack={()=>setActive(null)}><KirtiRoutine /></PageWrap>
@@ -18,6 +29,19 @@ export default function App() {
 
   return (
     <div style={styles.root}>
+      {showExitConfirm && (
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center'}}>
+          <div style={{background:'#fff',borderRadius:20,padding:28,margin:20,textAlign:'center',maxWidth:320}}>
+            <div style={{fontSize:32,marginBottom:12}}>🕉️</div>
+            <div style={{fontSize:18,fontWeight:800,marginBottom:8,color:'#7b0000'}}>App बंद करें?</div>
+            <div style={{fontSize:13,color:'#666',marginBottom:20}}>अहूजा परिवार Planner बंद करना चाहते हैं?</div>
+            <div style={{display:'flex',gap:12}}>
+              <button onClick={()=>setShowExitConfirm(false)} style={{flex:1,padding:'12px',background:'#f5f5f5',border:'none',borderRadius:12,fontWeight:700,fontSize:14,cursor:'pointer'}}>रहने दें</button>
+              <button onClick={()=>{ window.close(); setTimeout(()=>{ window.location.href='about:blank' },100) }} style={{flex:1,padding:'12px',background:'#d46a10',color:'#fff',border:'none',borderRadius:12,fontWeight:700,fontSize:14,cursor:'pointer'}}>हाँ, बंद करें</button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div style={styles.header}>
         <div style={styles.om}>🕉️</div>
