@@ -111,7 +111,7 @@ export default function Routine() {
   const [editDraft, setEditDraft] = useState({})
   const [addingSection, setAddingSection] = useState(null)
   const [newTask, setNewTask] = useState({ time:'', task:'', tags:[] })
-  const [view, setView] = useState('today') // today | weekly | mantras
+  const [view, setView] = useState('today')
   const [showCelebrate, setShowCelebrate] = useState(false)
   const [dragId, setDragId] = useState(null)
   const [dragOverId, setDragOverId] = useState(null)
@@ -119,18 +119,14 @@ export default function Routine() {
   const [confirmReset, setConfirmReset] = useState(false)
   const editRef = useRef(null)
 
-  // Persist
   useEffect(() => { saveState({ tasks, done }) }, [tasks, done])
 
-  // Sections
   const sections = [...new Set(tasks.map(t => t.section))]
 
-  // Progress
   const todayDone = Object.values(done).filter(Boolean).length
   const todayTotal = tasks.length
   const pct = todayTotal ? Math.round((todayDone / todayTotal) * 100) : 0
 
-  // Toggle done
   const toggle = (id) => {
     const newDone = { ...done, [id]: !done[id] }
     setDone(newDone)
@@ -138,7 +134,6 @@ export default function Routine() {
     if (count === todayTotal) setShowCelebrate(true)
   }
 
-  // Edit task
   const startEdit = (t) => {
     setEditingId(t.id)
     setEditDraft({ time: t.time, task: t.task, tags: [...t.tags] })
@@ -153,7 +148,6 @@ export default function Routine() {
     const nd = { ...done }; delete nd[id]; setDone(nd)
   }
 
-  // Add task
   const addTask = (section) => {
     if (!newTask.task.trim()) return
     const id = Date.now()
@@ -162,7 +156,6 @@ export default function Routine() {
     setAddingSection(null)
   }
 
-  // Drag reorder
   const onDragStart = (id) => setDragId(id)
   const onDragOver = (e, id) => { e.preventDefault(); setDragOverId(id) }
   const onDrop = (targetId) => {
@@ -176,7 +169,6 @@ export default function Routine() {
     setDragId(null); setDragOverId(null)
   }
 
-  // Filter
   const filterAreas = ['ALL', ...Object.keys(AREA_META)]
   const filtered = tasks.filter(t => {
     const areaOk = activeFilter === 'ALL' || t.tags.includes(activeFilter)
@@ -184,18 +176,13 @@ export default function Routine() {
     return areaOk && searchOk
   })
 
-  // Reset day
   const resetDay = () => { setDone({}); setConfirmReset(false) }
-
-  // Reset all data
   const resetAll = () => { setTasks(INITIAL_TASKS); setDone({}); setConfirmReset(false) }
 
   const secColor = (sec) => SECTION_COLORS[sec] || { bg:'#f9f9f9', accent:'#666', icon:'📋' }
 
-  // ── RENDER ───────────────────────────────────────────────
   return (
     <div style={styles.root}>
-      {/* Header */}
       <header style={styles.header}>
         <div style={styles.headerTop}>
           <div>
@@ -203,14 +190,14 @@ export default function Routine() {
             <div style={styles.headerSub}>Daily Routine Planner</div>
           </div>
           <div style={styles.progressCircle}>
-            <svg width="52" height="52">
-              <circle cx="26" cy="26" r="22" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="4"/>
-              <circle cx="26" cy="26" r="22" fill="none" stroke="#ffd700" strokeWidth="4"
-                strokeDasharray={`${2*Math.PI*22}`}
-                strokeDashoffset={`${2*Math.PI*22*(1-pct/100)}`}
+            <svg width="56" height="56">
+              <circle cx="28" cy="28" r="23" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="4"/>
+              <circle cx="28" cy="28" r="23" fill="none" stroke="#ffd700" strokeWidth="4"
+                strokeDasharray={`${2*Math.PI*23}`}
+                strokeDashoffset={`${2*Math.PI*23*(1-pct/100)}`}
                 strokeLinecap="round"
-                style={{ transform:'rotate(-90deg)', transformOrigin:'26px 26px', transition:'stroke-dashoffset 0.5s' }}/>
-              <text x="26" y="31" textAnchor="middle" fill="#ffd700" fontSize="13" fontWeight="bold">{pct}%</text>
+                style={{ transform:'rotate(-90deg)', transformOrigin:'28px 28px', transition:'stroke-dashoffset 0.5s' }}/>
+              <text x="28" y="33" textAnchor="middle" fill="#ffd700" fontSize="13" fontWeight="bold">{pct}%</text>
             </svg>
           </div>
         </div>
@@ -220,7 +207,6 @@ export default function Routine() {
         <div style={styles.progressText}>{todayDone} / {todayTotal} tasks complete</div>
       </header>
 
-      {/* Nav */}
       <nav style={styles.nav}>
         {[['today','📋 आज'],['weekly','📅 Weekly'],['mantras','🕉️ Mantras']].map(([v,l])=>(
           <button key={v} onClick={()=>setView(v)} style={{...styles.navBtn, ...(view===v?styles.navBtnActive:{})}}>
@@ -230,7 +216,6 @@ export default function Routine() {
       </nav>
 
       {view === 'today' && <>
-        {/* Search + Filter */}
         <div style={styles.toolBar}>
           <input
             placeholder="🔍 Search tasks..."
@@ -248,7 +233,6 @@ export default function Routine() {
           ))}
         </div>
 
-        {/* Task List grouped by section */}
         {sections.map(sec => {
           const secTasks = filtered.filter(t => t.section === sec)
           if (!secTasks.length) return null
@@ -325,7 +309,6 @@ export default function Routine() {
                 </div>
               ))}
 
-              {/* Add task to section */}
               {addingSection===sec ? (
                 <div style={styles.addBox}>
                   <input placeholder="Time (e.g. 9:00 AM)" value={newTask.time}
@@ -358,7 +341,6 @@ export default function Routine() {
           )
         })}
 
-        {/* Reset buttons */}
         <div style={styles.resetRow}>
           {!confirmReset ? (
             <>
@@ -378,7 +360,6 @@ export default function Routine() {
       {view === 'weekly' && <WeeklyView />}
       {view === 'mantras' && <MantrasView />}
 
-      {/* Celebration */}
       {showCelebrate && (
         <div style={styles.celebrateOverlay} onClick={()=>setShowCelebrate(false)}>
           <div style={styles.celebrateBox}>
@@ -472,72 +453,72 @@ const styles = {
   root: { fontFamily:"'Noto Sans Devanagari', 'Segoe UI', sans-serif", background:'#f5f0eb', minHeight:'100vh', maxWidth:480, margin:'0 auto', paddingBottom:40 },
   header: { background:'linear-gradient(135deg, #d46a10 0%, #7b0000 100%)', padding:'20px 16px 12px', color:'#fff' },
   headerTop: { display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 },
-  headerTitle: { fontSize:22, fontWeight:700, letterSpacing:0.5 },
-  headerSub: { fontSize:12, opacity:0.85, marginTop:2 },
+  headerTitle: { fontSize:26, fontWeight:700, letterSpacing:0.5 },
+  headerSub: { fontSize:15, opacity:0.85, marginTop:2 },
   progressCircle: { flexShrink:0 },
-  progressBar: { background:'rgba(255,255,255,0.2)', borderRadius:8, height:6, overflow:'hidden' },
+  progressBar: { background:'rgba(255,255,255,0.2)', borderRadius:8, height:7, overflow:'hidden' },
   progressFill: { background:'#ffd700', height:'100%', borderRadius:8, transition:'width 0.4s' },
-  progressText: { fontSize:11, opacity:0.85, marginTop:5, textAlign:'right' },
+  progressText: { fontSize:13, opacity:0.85, marginTop:5, textAlign:'right' },
   nav: { display:'flex', background:'#fff', borderBottom:'2px solid #f0e8de', position:'sticky', top:0, zIndex:10 },
-  navBtn: { flex:1, padding:'11px 4px', border:'none', background:'transparent', fontSize:12, fontWeight:600, color:'#888', cursor:'pointer' },
+  navBtn: { flex:1, padding:'13px 4px', border:'none', background:'transparent', fontSize:15, fontWeight:600, color:'#888', cursor:'pointer' },
   navBtnActive: { color:'#d46a10', borderBottom:'3px solid #d46a10' },
   toolBar: { padding:'10px 12px 4px' },
-  searchInput: { width:'100%', padding:'8px 12px', border:'1.5px solid #ddd', borderRadius:10, fontSize:13, outline:'none', boxSizing:'border-box', background:'#fff' },
+  searchInput: { width:'100%', padding:'10px 14px', border:'1.5px solid #ddd', borderRadius:10, fontSize:15, outline:'none', boxSizing:'border-box', background:'#fff' },
   filterRow: { display:'flex', gap:6, padding:'6px 12px 10px', overflowX:'auto', scrollbarWidth:'none' },
-  filterChip: { padding:'4px 10px', border:'1.5px solid #ddd', borderRadius:20, fontSize:11, background:'#fff', cursor:'pointer', whiteSpace:'nowrap', color:'#555', fontWeight:600 },
+  filterChip: { padding:'5px 12px', border:'1.5px solid #ddd', borderRadius:20, fontSize:13, background:'#fff', cursor:'pointer', whiteSpace:'nowrap', color:'#555', fontWeight:600 },
   section: { margin:'8px 10px', borderRadius:14, overflow:'hidden', boxShadow:'0 2px 8px rgba(0,0,0,0.07)' },
-  sectionHeader: { display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 14px', borderLeft:'4px solid', background:'rgba(255,255,255,0.6)' },
-  sectionTitle: { fontWeight:700, fontSize:13, color:'#222' },
-  sectionBadge: { color:'#fff', borderRadius:12, padding:'2px 8px', fontSize:11, fontWeight:700 },
+  sectionHeader: { display:'flex', justifyContent:'space-between', alignItems:'center', padding:'11px 14px', borderLeft:'4px solid', background:'rgba(255,255,255,0.6)' },
+  sectionTitle: { fontWeight:700, fontSize:15, color:'#222' },
+  sectionBadge: { color:'#fff', borderRadius:12, padding:'3px 9px', fontSize:13, fontWeight:700 },
   taskCard: { background:'#fff', margin:'1px 0', borderLeft:'3px solid transparent', transition:'all 0.2s', cursor:'grab' },
   taskDone: { opacity:0.6, background:'#f9f9f9' },
   taskDragOver: { background:'#fff9f0', boxShadow:'inset 0 0 0 2px #d46a10' },
-  taskRow: { display:'flex', alignItems:'flex-start', gap:10, padding:'10px 12px', cursor:'pointer' },
-  checkbox: { width:22, height:22, border:'2px solid', borderRadius:6, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:2, transition:'all 0.2s' },
+  taskRow: { display:'flex', alignItems:'flex-start', gap:10, padding:'12px 12px', cursor:'pointer' },
+  checkbox: { width:24, height:24, border:'2px solid', borderRadius:6, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:2, transition:'all 0.2s' },
   checkboxDone: { background:'#2e7d32' },
-  checkMark: { color:'#fff', fontSize:14, fontWeight:700 },
+  checkMark: { color:'#fff', fontSize:15, fontWeight:700 },
   taskContent: { flex:1, minWidth:0 },
-  taskTime: { fontSize:11, color:'#d46a10', fontWeight:700, marginBottom:2 },
-  taskText: { fontSize:13, color:'#222', lineHeight:1.4 },
+  taskTime: { fontSize:13, color:'#d46a10', fontWeight:700, marginBottom:3 },
+  taskText: { fontSize:16, color:'#222', lineHeight:1.5 },
   taskTextDone: { textDecoration:'line-through', color:'#999' },
-  tagRow: { display:'flex', flexWrap:'wrap', gap:4, marginTop:5 },
-  tag: { fontSize:10, padding:'2px 7px', borderRadius:12, fontWeight:600 },
+  tagRow: { display:'flex', flexWrap:'wrap', gap:4, marginTop:6 },
+  tag: { fontSize:12, padding:'3px 8px', borderRadius:12, fontWeight:600 },
   taskActions: { display:'flex', gap:4, alignItems:'center', flexShrink:0 },
-  iconBtn: { background:'none', border:'none', cursor:'pointer', fontSize:15, padding:'2px', opacity:0.6 },
-  dragHandle: { fontSize:16, color:'#bbb', cursor:'grab', userSelect:'none' },
+  iconBtn: { background:'none', border:'none', cursor:'pointer', fontSize:18, padding:'2px', opacity:0.6 },
+  dragHandle: { fontSize:18, color:'#bbb', cursor:'grab', userSelect:'none' },
   editBox: { padding:'10px 12px', display:'flex', flexDirection:'column', gap:8 },
-  editInput: { padding:'7px 10px', border:'1.5px solid #ddd', borderRadius:8, fontSize:13, outline:'none', width:'100%', boxSizing:'border-box' },
-  editTextarea: { padding:'7px 10px', border:'1.5px solid #ddd', borderRadius:8, fontSize:13, outline:'none', resize:'vertical', width:'100%', boxSizing:'border-box' },
+  editInput: { padding:'8px 12px', border:'1.5px solid #ddd', borderRadius:8, fontSize:15, outline:'none', width:'100%', boxSizing:'border-box' },
+  editTextarea: { padding:'8px 12px', border:'1.5px solid #ddd', borderRadius:8, fontSize:15, outline:'none', resize:'vertical', width:'100%', boxSizing:'border-box' },
   editTagRow: { display:'flex', flexWrap:'wrap', gap:5 },
-  tagToggle: { padding:'4px 8px', border:'1.5px solid #ddd', borderRadius:16, fontSize:12, cursor:'pointer', background:'#f5f5f5' },
+  tagToggle: { padding:'5px 10px', border:'1.5px solid #ddd', borderRadius:16, fontSize:14, cursor:'pointer', background:'#f5f5f5' },
   editActions: { display:'flex', gap:8 },
-  btnSave: { padding:'8px 16px', background:'#d46a10', color:'#fff', border:'none', borderRadius:8, fontWeight:700, cursor:'pointer', fontSize:13 },
-  btnCancel: { padding:'8px 14px', background:'#eee', color:'#555', border:'none', borderRadius:8, fontWeight:600, cursor:'pointer', fontSize:13 },
+  btnSave: { padding:'10px 18px', background:'#d46a10', color:'#fff', border:'none', borderRadius:8, fontWeight:700, cursor:'pointer', fontSize:15 },
+  btnCancel: { padding:'10px 16px', background:'#eee', color:'#555', border:'none', borderRadius:8, fontWeight:600, cursor:'pointer', fontSize:15 },
   addBox: { padding:'10px 12px', background:'#fffaf5', display:'flex', flexDirection:'column', gap:8 },
-  addTaskBtn: { width:'100%', padding:'9px', background:'none', border:'none', cursor:'pointer', fontSize:13, fontWeight:600, textAlign:'center' },
+  addTaskBtn: { width:'100%', padding:'11px', background:'none', border:'none', cursor:'pointer', fontSize:15, fontWeight:600, textAlign:'center' },
   resetRow: { display:'flex', gap:10, justifyContent:'center', padding:'20px 16px 0' },
-  btnReset: { padding:'9px 18px', background:'#fff', border:'1.5px solid #d46a10', color:'#d46a10', borderRadius:10, fontWeight:700, cursor:'pointer', fontSize:13 },
-  btnResetAll: { padding:'9px 18px', background:'#fff', border:'1.5px solid #b71c1c', color:'#b71c1c', borderRadius:10, fontWeight:700, cursor:'pointer', fontSize:13 },
+  btnReset: { padding:'10px 20px', background:'#fff', border:'1.5px solid #d46a10', color:'#d46a10', borderRadius:10, fontWeight:700, cursor:'pointer', fontSize:15 },
+  btnResetAll: { padding:'10px 20px', background:'#fff', border:'1.5px solid #b71c1c', color:'#b71c1c', borderRadius:10, fontWeight:700, cursor:'pointer', fontSize:15 },
   confirmBox: { background:'#fff', padding:14, borderRadius:12, textAlign:'center', border:'1.5px solid #ddd', display:'flex', flexDirection:'column', gap:8, alignItems:'center' },
   celebrateOverlay: { position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:100 },
   celebrateBox: { background:'#fff', borderRadius:20, padding:28, textAlign:'center', maxWidth:320, margin:16 },
-  celebrateEmoji: { fontSize:56, marginBottom:8 },
-  celebrateTitle: { fontSize:22, fontWeight:800, color:'#d46a10', marginBottom:4 },
-  celebrateSub: { fontSize:14, color:'#555', marginBottom:8 },
-  celebrateQuote: { fontSize:13, color:'#7b0000', fontWeight:600, fontStyle:'italic', marginBottom:16 },
+  celebrateEmoji: { fontSize:60, marginBottom:8 },
+  celebrateTitle: { fontSize:24, fontWeight:800, color:'#d46a10', marginBottom:4 },
+  celebrateSub: { fontSize:16, color:'#555', marginBottom:8 },
+  celebrateQuote: { fontSize:15, color:'#7b0000', fontWeight:600, fontStyle:'italic', marginBottom:16 },
   weeklyWrap: { padding:'10px 10px 20px' },
-  dayCard: { background:'#fff', borderRadius:14, padding:'14px 16px', marginBottom:10, borderTop:'4px solid', boxShadow:'0 2px 8px rgba(0,0,0,0.07)' },
-  dayTitle: { fontSize:17, fontWeight:800, marginBottom:3 },
-  dayFocus: { fontSize:13, color:'#555', fontWeight:600, marginBottom:8 },
-  dayRow: { fontSize:12, color:'#333', marginBottom:4, lineHeight:1.5 },
+  dayCard: { background:'#fff', borderRadius:14, padding:'16px 16px', marginBottom:10, borderTop:'4px solid', boxShadow:'0 2px 8px rgba(0,0,0,0.07)' },
+  dayTitle: { fontSize:20, fontWeight:800, marginBottom:4 },
+  dayFocus: { fontSize:15, color:'#555', fontWeight:600, marginBottom:8 },
+  dayRow: { fontSize:14, color:'#333', marginBottom:5, lineHeight:1.6 },
   dayLabel: { fontWeight:700, color:'#888' },
   mantrasWrap: { padding:'10px 10px 20px' },
-  mantraHeader: { fontSize:17, fontWeight:800, color:'#7b0000', textAlign:'center', padding:'10px 0 6px' },
-  mantraCard: { background:'#fff', borderRadius:12, padding:'12px 14px', marginBottom:8, borderLeft:'4px solid', boxShadow:'0 1px 5px rgba(0,0,0,0.06)' },
-  mantraWhen: { fontSize:12, fontWeight:800, marginBottom:3 },
-  mantraText: { fontSize:14, fontWeight:600, color:'#222', marginBottom:3 },
-  mantraBenefit: { fontSize:11, color:'#666' },
+  mantraHeader: { fontSize:20, fontWeight:800, color:'#7b0000', textAlign:'center', padding:'10px 0 6px' },
+  mantraCard: { background:'#fff', borderRadius:12, padding:'13px 14px', marginBottom:8, borderLeft:'4px solid', boxShadow:'0 1px 5px rgba(0,0,0,0.06)' },
+  mantraWhen: { fontSize:14, fontWeight:800, marginBottom:3 },
+  mantraText: { fontSize:16, fontWeight:600, color:'#222', marginBottom:4 },
+  mantraBenefit: { fontSize:13, color:'#666' },
   quoteBox: { background:'linear-gradient(135deg,#fff9f0,#fff0e0)', border:'2px solid #d46a10', borderRadius:14, padding:18, marginTop:16, textAlign:'center' },
-  quoteText: { fontSize:14, fontWeight:700, color:'#7b0000', lineHeight:1.6 },
-  quoteAuthor: { fontSize:12, color:'#d46a10', marginTop:8, fontWeight:600 },
+  quoteText: { fontSize:16, fontWeight:700, color:'#7b0000', lineHeight:1.7 },
+  quoteAuthor: { fontSize:14, color:'#d46a10', marginTop:8, fontWeight:600 },
 }
