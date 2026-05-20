@@ -82,7 +82,7 @@ const SECTION_COLORS = {
   '🌙 रात — Wind Down':    { bg:'#fbe9e7', accent:'#7b0000' },
 }
 
-const STORAGE_KEY = 'mahi_routine_v2'
+const STORAGE_KEY = 'mahi_routine_v1'
 const DEF_SETTINGS = { dayStart:'6:00 AM', dayEnd:'9:30 PM', actualStart:'' }
 
 function loadState() {
@@ -234,7 +234,7 @@ export default function MahiRoutine() {
           <div>
             <div style={S.headerTitle}>👗 माही अहूजा</div>
             <div style={S.headerSub}>Fashion Entrepreneur • Content Creator</div>
-            <div style={{...S.headerSub,color:'#ffb3c6',fontSize:11}}>तुला लग्न • मकर राशि • आर्द्रा नक्षत्र</div>
+            <div style={{...S.headerSub,color:'#ffb3c6',fontSize:11}}>तुला लग्न • मकर राशि • आर्द्रा नक्षत्र • राहु महादशा</div>
           </div>
           <div style={S.progressCircle}>
             <svg width='56' height='56'>
