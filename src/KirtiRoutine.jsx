@@ -41,61 +41,124 @@ const AREA_META = {
   '🌸': { label:'Self Care', bg:'#f3e5f5', color:'#6a1b9a' },
 }
 
+// ── Family Calendar (shared across all members)
+const FAMILY_CAL_KEY = 'family_calendar_v1'
+const DEFAULT_CAL_EVENTS = [
+  { id:1,  date:'01-12', label:'🧁 किर्ती का जन्मदिन' },
+  { id:2,  date:'01-31', label:'💞 भूमि-मुकेश Anniversary' },
+  { id:3,  date:'02-03', label:'💞 किर्ती-संजू Anniversary' },
+  { id:4,  date:'03-16', label:'🧁 अनिता जन्मदिन' },
+  { id:5,  date:'03-22', label:'🧁 सपना जन्मदिन' },
+  { id:6,  date:'10-09', label:'🧁 संजू का जन्मदिन' },
+  { id:7,  date:'12-06', label:'🧁 भूमि जन्मदिन' },
+  { id:8,  date:'12-19', label:'💞 सपना-अमर Anniversary' },
+  { id:9,  date:'12-30', label:'🧁 तम्मना जन्मदिन' },
+]
+function loadCalEvents() {
+  try { const s = localStorage.getItem(FAMILY_CAL_KEY); if (s) return JSON.parse(s) } catch {}
+  return DEFAULT_CAL_EVENTS
+}
+function saveCalEvents(ev) {
+  try { localStorage.setItem(FAMILY_CAL_KEY, JSON.stringify(ev)) } catch {}
+}
+function parseCalText(text) {
+  const MONTHS = {january:1,february:2,march:3,april:4,may:5,june:6,july:7,august:8,september:9,october:10,november:11,december:12,jan:1,feb:2,mar:3,apr:4,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12}
+  return text.trim().split('\n').filter(l=>l.trim()).map((line,i)=>{
+    const parts = line.trim().split(/\s+/)
+    const day = parseInt(parts[0])
+    const month = MONTHS[parts[1]?.toLowerCase()]
+    if(!day||!month) return null
+    const label = parts.slice(2).join(' ').trim()
+    if(!label) return null
+    return { id: Date.now()+i, date:`${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`, label }
+  }).filter(Boolean)
+}
+
+// ── Day Colors (Vedic Astrology weekday lords)
+const DAY_COLORS = [
+  { day:'रविवार',   en:'Sunday',    color:'#d46a10', name:'नारंगी / सुनहरा', god:'☀️ सूर्य', outfits:['Orange kurta / shirt','Copper accessories','Golden dupatta / tie'], avoid:'काला / नेवी नीला' },
+  { day:'सोमवार',   en:'Monday',    color:'#90a4ae', name:'सफेद / क्रीम / सिल्वर', god:'🌙 चंद्र', outfits:['White kurta / shirt','Cream colored outfit','Silver accessories'], avoid:'काला / गाढ़ा लाल' },
+  { day:'मंगलवार',  en:'Tuesday',   color:'#c62828', name:'लाल / गुलाबी / कोरल', god:'🔴 मंगल', outfits:['Red kurta / shirt','Coral combination','Pink accessories'], avoid:'हरा / सफेद' },
+  { day:'बुधवार',   en:'Wednesday', color:'#2e7d32', name:'हरा / Grass Green', god:'💚 बुध', outfits:['Green kurta / shirt','Olive combination','Jade accessories'], avoid:'लाल / नारंगी' },
+  { day:'गुरुवार',  en:'Thursday',  color:'#f9a825', name:'पीला / केसरी / सुनहरा', god:'🟡 बृहस्पति', outfits:['Yellow kurta / shirt','Saffron combination','Gold accessories'], avoid:'काला / नेवी' },
+  { day:'शुक्रवार', en:'Friday',    color:'#e91e63', name:'सफेद / गुलाबी / हल्का नीला', god:'🌸 शुक्र', outfits:['White or pink outfit','Light blue combination','Diamond / pearl accessories'], avoid:'काला / गाढ़ा' },
+  { day:'शनिवार',   en:'Saturday',  color:'#263238', name:'काला / नेवी नीला / बैंगनी', god:'🪐 शनि', outfits:['Black / dark blue kurta','Navy combination','Iron / dark accessories'], avoid:'नारंगी / लाल' },
+]
+
+// ── Kirti-specific data
+const KIRTI_MEALS = [
+  { id:0, day:'रविवार',   breakfast:'फल + 1 कप दूध + शहद (Sattvic)',               lunch:'2 रोटी + मूंग दाल + लौकी + सलाद',   dinner:'खिचड़ी + दही',            tip:'☀️ Sattvic Sunday — Light, Energizing' },
+  { id:1, day:'सोमवार',   breakfast:'पोहा + 1 केला + हर्बल टी',                     lunch:'2 रोटी + अरहर दाल + तोरई + सलाद',  dinner:'दलिया + छाछ',             tip:'🌙 चंद्र दिवस — White Sattvic foods' },
+  { id:2, day:'मंगलवार',  breakfast:'उपमा + 1 संतरा',                                 lunch:'2 रोटी + मसूर दाल + गाजर',         dinner:'सूप + टोस्ट (हल्का)',      tip:'🔴 मंगल ऊर्जा — Court में strength!' },
+  { id:3, day:'बुधवार',   breakfast:'Green Moong Sprouts + Fruit Salad + Tea',      lunch:'2 रोटी + पालक सब्जी + दाल',        dinner:'मूंग दाल + चावल',          tip:'💚 बुध दिवस — Green vegetables, AOL prep' },
+  { id:4, day:'गुरुवार',  breakfast:'बेसन चीला 1 + दही + 1 केला',                  lunch:'2 रोटी + चना दाल + आलू (light)',    dinner:'दाल सूप + रोटी',           tip:'🟡 गुरु दिवस — Yellow foods, Wisdom day' },
+  { id:5, day:'शुक्रवार', breakfast:'दलिया + फल + हर्बल टी',                         lunch:'2 रोटी + परवल / लौकी + दाल',       dinner:'रागी खिचड़ी + दही',        tip:'🌸 शुक्र दिवस — Light sweet allowed, JCI day' },
+  { id:6, day:'शनिवार',   breakfast:'उपमा + काला तिल + चाय',                         lunch:'2 रोटी + काला चना + मेथी',         dinner:'दलिया + सूप (हल्का)',      tip:'🪐 शनि दिवस — Urad dal, sesame, iron-rich (Shani Dasha)' },
+]
+
+const KIRTI_DAY_TIPS = [
+  'Mesh Lagna = Red adds Confidence in Court. Sunday = Family + Garden day, bright colors!',
+  'सोमवार = White/Cream Saree या Suit in Court = Professional + Calm Impression।',
+  'मंगलवार = Red energy! Court में Red dupatta या accessories = Authority + Win cases!',
+  'बुधवार = Budh = Green. Green Saree / Suit = Advocate की Intelligence दिखती है।',
+  'गुरुवार = Yellow / Saffron Saree = Guru का आशीर्वाद + AOL Teacher aura!',
+  'शुक्रवार = Shukra = Pink/White. JCI / AOL meetings के लिए perfect presentation day!',
+  'शनिवार = Shani Dasha में Black/Navy respect करता है। Dark Blue Saree = Power in Court!',
+]
+
 const KIRTI_TASKS = [
-  { id:1,  section:'🌅 ब्रह्म मुहूर्त — Spiritual', time:'4:30 AM', task:'उठें — पुष्य नक्षत्र की शक्ति इस समय सबसे अधिक है', tags:['🕉️'], pinned:true,  skippable:false },
-  { id:2,  section:'🌅 ब्रह्म मुहूर्त — Spiritual', time:'4:35 AM', task:'तांबे के लोटे से पानी — 1 गिलास (रात भर रखा हुआ)', tags:['🏥'], pinned:false, skippable:false },
-  { id:3,  section:'🌅 ब्रह्म मुहूर्त — Spiritual', time:'4:40 AM', task:'तुलसी के पास दीपक जलाएं — शुभ शुरुआत', tags:['🕉️'], pinned:false, skippable:true },
-  { id:4,  section:'🌅 ब्रह्म मुहूर्त — Spiritual', time:'4:45 AM', task:'Sudarshan Kriya — Art of Living (NEVER MISS — 45 min)', tags:['🕉️','🏥'], pinned:true,  skippable:false },
-  { id:5,  section:'🌅 ब्रह्म मुहूर्त — Spiritual', time:'5:30 AM', task:"Mantra Jap — 'ॐ गुरवे नमः' माला के साथ — 21 बार", tags:['🕉️'], pinned:false, skippable:true },
-  { id:6,  section:'🌅 ब्रह्म मुहूर्त — Spiritual', time:'5:38 AM', task:'Meditation — 15 मिनट पूर्ण मौन (Court से पहले शांति)', tags:['🕉️','🧠'], pinned:false, skippable:true },
-  { id:7,  section:'🌅 ब्रह्म मुहूर्त — Spiritual', time:'5:55 AM', task:'Satsang Reading — 5 मिनट Gurudev का एक Message', tags:['🕉️'], pinned:false, skippable:true },
-  { id:8,  section:'🌿 बगीचा — Healing Time', time:'6:00 AM', task:'बगीचे में जाएं — पौधों को पानी दें (NON-NEGOTIABLE 20 min)', tags:['🌿','🏥'], pinned:true,  skippable:false },
-  { id:9,  section:'🌿 बगीचा — Healing Time', time:'6:05 AM', task:'तुलसी को पानी + 5 पत्ते खाएं — Immunity boost', tags:['🌿','🕉️'], pinned:false, skippable:false },
-  { id:10, section:'🌿 बगीचा — Healing Time', time:'6:10 AM', task:'Healing Herbs की देखभाल — ब्राह्मी, गिलोय, पुदीना', tags:['🌿','🏥'], pinned:false, skippable:true },
-  { id:11, section:'🌿 बगीचा — Healing Time', time:'6:20 AM', task:'बगीचे में 5 मिनट — ज़मीन पर नंगे पाँव (Grounding)', tags:['🌿','🏥'], pinned:false, skippable:true },
-  { id:12, section:'🍽️ सुबह — नाश्ता और तैयारी', time:'6:35 AM', task:'नाश्ता तैयार करें — सात्विक, सबके लिए (दलिया/पोहा/उपमा)', tags:['🏥','❤️'], pinned:false, skippable:false },
-  { id:13, section:'🍽️ सुबह — नाश्ता और तैयारी', time:'6:50 AM', task:'नाश्ता करें — ध्यान से, जल्दी नहीं, Protein + Fruit भी', tags:['🏥'], pinned:false, skippable:false },
-  { id:14, section:'🍽️ सुबह — नाश्ता और तैयारी', time:'7:00 AM', task:'माही का Tiffin / Lunch Box Pack करें (घर का खाना)', tags:['❤️','🏥'], pinned:false, skippable:true },
-  { id:15, section:'🍽️ सुबह — नाश्ता और तैयारी', time:'7:10 AM', task:'BP Check + पानी एक गिलास', tags:['🏥'], pinned:false, skippable:false },
-  { id:16, section:'🍽️ सुबह — नाश्ता और तैयारी', time:'7:18 AM', task:"Court Files Sort करें + '3 Deep Breaths — मैं निमित्त हूं'", tags:['⚖️','🧠'], pinned:false, skippable:true },
-  { id:17, section:'🍽️ सुबह — नाश्ता और तैयारी', time:'7:30 AM', task:'घर की एक ज़रूरी चीज़ Check — Gas / सब्ज़ी / दूध', tags:['❤️'], pinned:false, skippable:true },
-  { id:18, section:'🍽️ सुबह — नाश्ता और तैयारी', time:'7:42 AM', task:'तैयार हों — साफ, Professional, आत्मविश्वास के साथ', tags:['🌸'], pinned:false, skippable:true },
-  { id:19, section:'🍽️ सुबह — नाश्ता और तैयारी', time:'7:52 AM', task:'Court के लिए निकलें — सुरक्षित यात्रा', tags:['⚖️'], pinned:false, skippable:false },
-  { id:20, section:'⚖️ Court — Advocate Work', time:'8:00 AM',  task:'Court — पूरे ध्यान से, "मैं निमित्त हूं" याद रखें', tags:['⚖️'], pinned:true,  skippable:false },
-  { id:21, section:'⚖️ Court — Advocate Work', time:'8:00 AM',  task:'आज के Important Cases List + Arguments Review', tags:['⚖️','🧠'], pinned:false, skippable:true },
-  { id:22, section:'⚖️ Court — Advocate Work', time:'10:30 AM', task:'Short Break — पानी + 5 मिनट बाहर (Eyes + Energy)', tags:['🏥'], pinned:false, skippable:true },
-  { id:23, section:'⚖️ Court — Advocate Work', time:'11:00 AM', task:'1 Client से Fee Discussion / Collection — Politely', tags:['💰','⚖️'], pinned:false, skippable:true },
-  { id:24, section:'⚖️ Court — Advocate Work', time:'11:30 AM', task:'नए Case Inquiry — Intake, Client सुनें, Advise करें', tags:['⚖️'], pinned:false, skippable:true },
-  { id:25, section:'⚖️ Court — Advocate Work', time:'12:30 PM', task:'Lunch — Court में ही, शांति से, Phone बंद (घर का खाना)', tags:['🏥','🕉️'], pinned:true,  skippable:false },
-  { id:26, section:'⚖️ Court — Advocate Work', time:'12:52 PM', task:'Micro Rest — 8 मिनट आंखें बंद (दोपहर की Energy)', tags:['🏥'], pinned:false, skippable:true },
-  { id:27, section:'⚖️ Court — Advocate Work', time:'1:00 PM',  task:'Afternoon Cases — Research / Drafting / Submissions', tags:['⚖️','🧠'], pinned:false, skippable:true },
-  { id:28, section:'⚖️ Court — Advocate Work', time:'1:30 PM',  task:'Client Outstanding Fees — रोज़ 1 Reminder भेजें', tags:['💰'], pinned:false, skippable:true },
-  { id:29, section:'🌍 AOL + JCI + Social Service', time:'2:00 PM', task:'AOL Teaching Prep — Bangalore Certification Material', tags:['🌍','🕉️'], pinned:false, skippable:true },
-  { id:30, section:'🌍 AOL + JCI + Social Service', time:'2:30 PM', task:'AOL Workshop Plan — Gondia / Raipur Session Outline', tags:['🌍','🕉️'], pinned:false, skippable:true },
-  { id:31, section:'🌍 AOL + JCI + Social Service', time:'3:00 PM', task:'JCI Project — Community work, Meeting coordination', tags:['🌍'], pinned:false, skippable:true },
-  { id:32, section:'🌍 AOL + JCI + Social Service', time:'3:30 PM', task:'Free Legal Aid — आज 1 जरूरतमंद को Help करें', tags:['⚖️','🌍'], pinned:false, skippable:true },
-  { id:33, section:'🌍 AOL + JCI + Social Service', time:'4:00 PM', task:'Monthly Expense Review — घर का बजट, हफ्ते में 1 बार', tags:['💰'], pinned:false, skippable:true },
-  { id:34, section:'🌍 AOL + JCI + Social Service', time:'4:20 PM', task:'Savings Check — FD / Investment / RD Update', tags:['💰'], pinned:false, skippable:true },
-  { id:35, section:'🚗 Court से घर — Transition', time:'5:00 PM', task:'Car में — 5 मिनट, Court वहीं छोड़ें, माँ बनें Breathing', tags:['🏥','🧠'], pinned:true,  skippable:false },
-  { id:36, section:'🚗 Court से घर — Transition', time:'5:10 PM', task:"'ॐ शं शनैश्चराय नमः' — मन में 7 बार (Shani Dasha)", tags:['🕉️'], pinned:false, skippable:true },
-  { id:37, section:'🚗 Court से घर — Transition', time:'5:20 PM', task:'रास्ते में सब्ज़ी / घर की ज़रूरत की चीज़ें लें', tags:['❤️'], pinned:false, skippable:true },
-  { id:38, section:'🏠 शाम — घर और परिवार', time:'5:35 PM', task:'बगीचे में 20 मिनट — Court का stress release, पौधों से बात', tags:['🌿','🏥'], pinned:true,  skippable:false },
-  { id:39, section:'🏠 शाम — घर और परिवार', time:'5:55 PM', task:'चाय — शांति से, 10 मिनट, Screen नहीं', tags:['🌸'], pinned:false, skippable:true },
-  { id:40, section:'🏠 शाम — घर और परिवार', time:'6:05 PM', task:'Sanjay के घर आने से पहले — 1 Household task Complete', tags:['❤️'], pinned:false, skippable:true },
-  { id:41, section:'🏠 शाम — घर और परिवार', time:'6:15 PM', task:'माही के साथ — 15 मिनट, NIFT prep / दिन की बात सुनें', tags:['❤️'], pinned:false, skippable:true },
-  { id:42, section:'🏠 शाम — घर और परिवार', time:'6:35 PM', task:'Sanjay के साथ — बगीचे में 15 मिनट (Sacred Couple Time)', tags:['❤️'], pinned:true,  skippable:false },
-  { id:43, section:'🏠 शाम — घर और परिवार', time:'6:55 PM', task:'Dinner की तैयारी शुरू करें — Simple, Nutritious, Saatvik', tags:['🏥','❤️'], pinned:false, skippable:false },
-  { id:44, section:'🏠 शाम — घर और परिवार', time:'7:20 PM', task:'घर की एक साफ़-सफ़ाई / Organise — कल के लिए Ready', tags:['❤️'], pinned:false, skippable:true },
-  { id:45, section:'🍛 रात — Dinner और परिवार', time:'7:30 PM', task:'Dinner तैयार — Table लगाएं, तीनों के साथ बैठें', tags:['❤️','🏥'], pinned:false, skippable:false },
-  { id:46, section:'🍛 रात — Dinner और परिवार', time:'7:45 PM', task:'Family Dinner — Phone नहीं, तीनों साथ, Gratitude', tags:['❤️','🏥'], pinned:true,  skippable:false },
-  { id:47, section:'🍛 रात — Dinner और परिवार', time:'8:10 PM', task:'दिन की 1 Gratitude बात — हर कोई बोले', tags:['❤️','🕉️'], pinned:false, skippable:true },
-  { id:48, section:'🍛 रात — Dinner और परिवार', time:'8:20 PM', task:'Kitchen Clean करें — साथ में, माही को भी involve करें', tags:['❤️'], pinned:false, skippable:true },
-  { id:49, section:'🍛 रात — Dinner और परिवार', time:'8:35 PM', task:'Sanjay के साथ Quality Time — Advocate mode पूरी तरह बंद', tags:['❤️'], pinned:true,  skippable:false },
-  { id:50, section:'🌙 रात — Wind Down', time:'9:00 PM', task:'Journal — आज क्या सीखा, किसे help किया, आभार', tags:['🕉️','🧠'], pinned:false, skippable:true },
-  { id:51, section:'🌙 रात — Wind Down', time:'9:15 PM', task:"'ॐ' — 21 बार दीपक के सामने (दिन का समापन)", tags:['🕉️'], pinned:false, skippable:true },
-  { id:52, section:'🌙 रात — Wind Down', time:'9:30 PM', task:'कल का Plan — Court Files, AOL prep, घर की ज़रूरत', tags:['🧠'], pinned:false, skippable:true },
-  { id:53, section:'🌙 रात — Wind Down', time:'9:42 PM', task:'Phone Silent — Screen Time बंद', tags:['🏥'], pinned:false, skippable:true },
-  { id:54, section:'🌙 रात — Wind Down', time:'9:50 PM', task:'सोएं — अच्छी नींद = कल की अच्छी Sudarshan Kriya', tags:['🏥'], pinned:true,  skippable:false },
+  // 🌅 ब्रह्म मुहूर्त — Spiritual (4:30 - 6:00 AM)
+  { id:1,  section:'🌅 ब्रह्म मुहूर्त — Spiritual', time:'4:30 AM', task:'उठें — पुष्य नक्षत्र की शक्ति इस समय सबसे अधिक है। तांबे से 1 गिलास पानी।', tags:['🕉️','🏥'], pinned:true,  skippable:false, highImpact:false },
+  { id:3,  section:'🌅 ब्रह्म मुहूर्त — Spiritual', time:'4:45 AM', task:'Sudarshan Kriya — Art of Living (NEVER MISS — यह आपका सबसे बड़ा रक्षा कवच है)', tags:['🕉️','🏥'], pinned:true,  skippable:false, highImpact:true },
+  { id:5,  section:'🌅 ब्रह्म मुहूर्त — Spiritual', time:'5:30 AM', task:"Mantra Jap — 'ॐ गुरवे नमः' 21 बार + Meditation 10 मिनट पूर्ण मौन", tags:['🕉️','🧠'], pinned:false, skippable:true, highImpact:false },
+  { id:7,  section:'🌅 ब्रह्म मुहूर्त — Spiritual', time:'5:45 AM', task:'Satsang Reading — Gurudev का 1 Message + दीपक जलाएं', tags:['🕉️'], pinned:false, skippable:true, highImpact:false },
+  // 🌿 बगीचा — Healing Time (6:00 - 6:30 AM)
+  { id:8,  section:'🌿 बगीचा — Healing Time', time:'6:00 AM', task:'बगीचे में जाएं — पौधों को पानी दें (NON-NEGOTIABLE — आपकी सबसे बड़ी Therapy)', tags:['🌿','🏥'], pinned:true,  skippable:false, highImpact:true },
+  { id:9,  section:'🌿 बगीचा — Healing Time', time:'6:15 AM', task:'तुलसी पूजा + 5 पत्ते खाएं + ब्राह्मी, गिलोय care + ज़मीन पर नंगे पाँव 5 min', tags:['🌿','🕉️','🏥'], pinned:false, skippable:false, highImpact:false },
+  // 🍽️ सुबह — नाश्ता और तैयारी (6:30 - 10:30 AM)
+  { id:12, section:'🍽️ सुबह — नाश्ता और तैयारी', time:'6:30 AM', task:'नाश्ता तैयार — सात्विक, परिवार के लिए (दलिया / पोहा / उपमा + फल)', tags:['🏥','❤️'], pinned:false, skippable:false, highImpact:false },
+  { id:13, section:'🍽️ सुबह — नाश्ता और तैयारी', time:'6:45 AM', task:'नाश्ता + BP Check + 1 गिलास पानी — शांति से, Protein + Fruit भी', tags:['🏥'], pinned:false, skippable:false, highImpact:false },
+  { id:14, section:'🍽️ सुबह — नाश्ता और तैयारी', time:'7:00 AM', task:'माही का Lunch Box Pack + घर की ज़रूरी चीज़ Check (Gas/सब्ज़ी/दूध)', tags:['❤️','🏥'], pinned:false, skippable:true, highImpact:false },
+  { id:16, section:'🍽️ सुबह — नाश्ता और तैयारी', time:'7:15 AM', task:'Case Files Review — आज के Important Cases + Arguments (घर से quiet time)', tags:['⚖️','🧠'], pinned:false, skippable:true, highImpact:true },
+  { id:17, section:'🍽️ सुबह — नाश्ता और तैयारी', time:'7:30 AM', task:'Client WhatsApp / Email Batch — 15 min (घर से, Court जाने से पहले)', tags:['⚖️','💰'], pinned:false, skippable:true, highImpact:false },
+  { id:29, section:'🍽️ सुबह — नाश्ता और तैयारी', time:'7:45 AM', task:'AOL Teaching Material Review — Bangalore Certification prep (घर में shanti)', tags:['🌍','🕉️'], pinned:false, skippable:true, highImpact:false },
+  { id:30, section:'🍽️ सुबह — नाश्ता और तैयारी', time:'8:00 AM', task:'JCI + Monthly Expense Review — घर का बजट, Savings check (घर से)', tags:['🌍','💰'], pinned:false, skippable:true, highImpact:false },
+  { id:18, section:'🍽️ सुबह — नाश्ता और तैयारी', time:'8:15 AM', task:'तैयार हों — Professional, आत्मविश्वास के साथ, "मैं निमित्त हूं"', tags:['🌸'], pinned:false, skippable:true, highImpact:false },
+  { id:19, section:'🍽️ सुबह — नाश्ता और तैयारी', time:'9:00 AM', task:'Court के लिए निकलें — सुरक्षित यात्रा, 3 Deep Breaths in car', tags:['⚖️','🧠'], pinned:false, skippable:false, highImpact:false },
+  { id:35, section:'🍽️ सुबह — नाश्ता और तैयारी', time:'9:30 AM', task:'Court Chamber — पहुंचें, Files Set करें, पानी पीएं, Calm रहें', tags:['⚖️'], pinned:false, skippable:true, highImpact:false },
+  { id:36, section:'🍽️ सुबह — नाश्ता और तैयारी', time:'10:00 AM', task:'Pre-Court Prep — Final Arguments, Witness Notes, Client briefing', tags:['⚖️','🧠'], pinned:false, skippable:true, highImpact:false },
+  // ⚖️ Court — Advocate Work (11:00 AM - 5:00 PM)
+  { id:20, section:'⚖️ Court — Advocate Work', time:'11:00 AM', task:'Court Session शुरू — "मैं निमित्त हूं" याद रखें, पूरे ध्यान से', tags:['⚖️'], pinned:true,  skippable:false, highImpact:true },
+  { id:21, section:'⚖️ Court — Advocate Work', time:'11:15 AM', task:'Cases — Arguments, Drafting, Submissions (Focus Block)', tags:['⚖️','🧠'], pinned:false, skippable:true, highImpact:false },
+  { id:22, section:'⚖️ Court — Advocate Work', time:'11:45 AM', task:'Client Fee Discussion / Collection — Politely, 1 client per day', tags:['💰','⚖️'], pinned:false, skippable:true, highImpact:false },
+  { id:23, section:'⚖️ Court — Advocate Work', time:'12:00 PM', task:'Short Break — पानी + 5 मिनट बाहर (Eyes + Energy rechargे)', tags:['🏥'], pinned:false, skippable:true, highImpact:false },
+  { id:24, section:'⚖️ Court — Advocate Work', time:'12:15 PM', task:'नए Case Inquiry + Client Outstanding Fees Reminder (1 message)', tags:['⚖️','💰'], pinned:false, skippable:true, highImpact:false },
+  { id:25, section:'⚖️ Court — Advocate Work', time:'2:00 PM',  task:'LUNCH — शांति से, Phone बंद, Gratitude (घर का Tiffin / Court cafeteria)', tags:['🏥','🕉️'], pinned:true,  skippable:false, highImpact:false },
+  { id:26, section:'⚖️ Court — Advocate Work', time:'2:15 PM',  task:'Micro Rest — 10 मिनट आंखें बंद + 1 गिलास पानी (Afternoon Energy)', tags:['🏥'], pinned:false, skippable:true, highImpact:false },
+  { id:27, section:'⚖️ Court — Advocate Work', time:'2:30 PM',  task:'Afternoon Cases — Research / Drafting / Submissions', tags:['⚖️','🧠'], pinned:false, skippable:true, highImpact:false },
+  { id:31, section:'⚖️ Court — Advocate Work', time:'3:00 PM',  task:'Free Legal Aid — 1 जरूरतमंद को Help करें (Social Service = Dharma)', tags:['⚖️','🌍'], pinned:false, skippable:true, highImpact:false },
+  { id:32, section:'⚖️ Court — Advocate Work', time:'3:15 PM',  task:'Savings / Investment Check — FD / RD / Monthly Expense (Court में quiet moment)', tags:['💰'], pinned:false, skippable:true, highImpact:false },
+  { id:33, section:'⚖️ Court — Advocate Work', time:'3:30 PM',  task:'AOL Workshop Plan — Gondia / Raipur session outline (Court break में)', tags:['🌍','🕉️'], pinned:false, skippable:true, highImpact:false },
+  { id:34, section:'⚖️ Court — Advocate Work', time:'4:00 PM',  task:'Final Cases of the Day + Tomorrow ki Preparation start', tags:['⚖️'], pinned:false, skippable:true, highImpact:false },
+  // 🚗 Court से घर — Transition (5:00 - 5:30 PM)
+  { id:37, section:'🚗 Court से घर — Transition', time:'5:00 PM', task:'Car में — 5 मिनट Breathing, Court वहीं छोड़ें, माँ बनें', tags:['🏥','🧠'], pinned:true,  skippable:false, highImpact:false },
+  { id:38, section:'🚗 Court से घर — Transition', time:'5:15 PM', task:"'ॐ शं शनैश्चराय नमः' — 7 बार मन में (Shani Dasha protection) + सब्ज़ी लें", tags:['🕉️','❤️'], pinned:false, skippable:true, highImpact:false },
+  // 🏠 शाम — घर और परिवार (5:30 - 7:30 PM)
+  { id:39, section:'🏠 शाम — घर और परिवार', time:'5:30 PM', task:'बगीचे में 20 मिनट — Court stress release, पौधों से बात (Therapy + Grounding)', tags:['🌿','🏥'], pinned:true,  skippable:false, highImpact:true },
+  { id:40, section:'🏠 शाम — घर और परिवार', time:'5:45 PM', task:'चाय — शांति से 10 मिनट, Screen नहीं', tags:['🌸'], pinned:false, skippable:true, highImpact:false },
+  { id:41, section:'🏠 शाम — घर और परिवार', time:'6:00 PM', task:'1 Household Task Complete + माही के साथ 15 मिनट (NIFT / दिन की बात)', tags:['❤️'], pinned:false, skippable:true, highImpact:false },
+  { id:42, section:'🏠 शाम — घर और परिवार', time:'6:15 PM', task:'Sanjay के साथ बगीचे में — 15 मिनट Sacred Couple Time (NON-NEGOTIABLE)', tags:['❤️'], pinned:true,  skippable:false, highImpact:true },
+  { id:43, section:'🏠 शाम — घर और परिवार', time:'6:30 PM', task:'Dinner की तैयारी — Simple, Sattvic, Nutritious (माही को involve करें)', tags:['🏥','❤️'], pinned:false, skippable:false, highImpact:false },
+  // 🍛 रात — Dinner और परिवार (7:30 - 8:45 PM)
+  { id:45, section:'🍛 रात — Dinner और परिवार', time:'7:30 PM', task:'Dinner तैयार — Table लगाएं, सबके साथ बैठें, Phone नहीं', tags:['❤️','🏥'], pinned:false, skippable:false, highImpact:false },
+  { id:46, section:'🍛 रात — Dinner और परिवार', time:'7:45 PM', task:'Family Dinner — तीनों साथ, 1 Gratitude बात हर कोई बोले', tags:['❤️','🏥'], pinned:true,  skippable:false, highImpact:true },
+  { id:48, section:'🍛 रात — Dinner और परिवार', time:'8:15 PM', task:'Kitchen Clean — माही के साथ (Teamwork + Bond)', tags:['❤️'], pinned:false, skippable:true, highImpact:false },
+  { id:49, section:'🍛 रात — Dinner और परिवार', time:'8:30 PM', task:'Sanjay के साथ Quality Time — Advocate mode पूरी तरह बंद (❤️ Priority)', tags:['❤️'], pinned:true,  skippable:false, highImpact:true },
+  // 🌙 रात — Wind Down (9:00 - 9:50 PM)
+  { id:50, section:'🌙 रात — Wind Down', time:'9:00 PM', task:'Journal — आज क्या सीखा, किसे help किया, आभार (Shani Dasha = Karma diary)', tags:['🕉️','🧠'], pinned:false, skippable:true, highImpact:false },
+  { id:51, section:'🌙 रात — Wind Down', time:'9:15 PM', task:"'ॐ' 21 बार + कल का Court Plan + AOL Prep", tags:['🕉️','🧠'], pinned:false, skippable:true, highImpact:false },
+  { id:53, section:'🌙 रात — Wind Down', time:'9:30 PM', task:'Phone Silent + Screen Time बंद', tags:['🏥'], pinned:false, skippable:true, highImpact:false },
+  { id:54, section:'🌙 रात — Wind Down', time:'9:45 PM', task:'सोएं — अच्छी नींद = कल की अच्छी Sudarshan Kriya + Court Energy', tags:['🏥'], pinned:true,  skippable:false, highImpact:false },
 ]
 
 const SECTION_COLORS = {
@@ -103,7 +166,6 @@ const SECTION_COLORS = {
   '🌿 बगीचा — Healing Time':         { bg:'#e8f5e9', accent:'#1b5e20' },
   '🍽️ सुबह — नाश्ता और तैयारी':    { bg:'#fff8e1', accent:'#f57f17' },
   '⚖️ Court — Advocate Work':        { bg:'#e8eaf6', accent:'#1a237e' },
-  '🌍 AOL + JCI + Social Service':   { bg:'#e0f2f1', accent:'#00695c' },
   '🚗 Court से घर — Transition':     { bg:'#fce4ec', accent:'#c62828' },
   '🏠 शाम — घर और परिवार':          { bg:'#f3e5f5', accent:'#6a1b9a' },
   '🍛 रात — Dinner और परिवार':       { bg:'#fce4ec', accent:'#880e4f' },
@@ -143,9 +205,12 @@ export default function KirtiRoutine() {
   const [selectMode, setSelectMode] = useState(false)
   const [selected, setSelected]     = useState(new Set())
   const [mergeForm, setMergeForm]   = useState(null)
+  const [calEvents, setCalEvents] = useState(loadCalEvents)
+  const [calInput,  setCalInput]  = useState('')
   const editRef = useRef(null)
 
   useEffect(() => { saveState({ tasks, done, settings }) }, [tasks, done, settings])
+  useEffect(() => { saveCalEvents(calEvents) }, [calEvents])
 
   const sections   = [...new Set(tasks.map(t => t.section))]
   const todayDone  = Object.values(done).filter(Boolean).length
@@ -249,8 +314,9 @@ export default function KirtiRoutine() {
   }
   const sc = sec => SECTION_COLORS[sec] || { bg:'#f9f9f9', accent:TEAL }
 
+  const filterAreas = ['ALL', '⚡ Impact', ...Object.keys(AREA_META)]
   const filtered = tasks.filter(t => {
-    const aOk = activeFilter === 'ALL' || t.tags.includes(activeFilter)
+    const aOk = activeFilter === 'ALL' || (activeFilter === '⚡ Impact' ? t.highImpact : t.tags.includes(activeFilter))
     const sOk = !searchQ || t.task.toLowerCase().includes(searchQ.toLowerCase()) || t.time.includes(searchQ)
     return aOk && sOk
   })
@@ -280,9 +346,9 @@ export default function KirtiRoutine() {
         <div style={S.progressText}>{todayDone} / {todayTotal} tasks complete</div>
       </header>
 
-      <nav style={S.nav}>
-        {[['today','📋 आज'],['weekly','📅 Weekly'],['aol','🕉️ AOL'],['garden','🌿 Garden']].map(([v,l])=>(
-          <button key={v} onClick={()=>setView(v)} style={{...S.navBtn,...(view===v?S.navActive:{})}}>{l}</button>
+      <nav style={{...S.nav, overflowX:'auto', scrollbarWidth:'none', WebkitOverflowScrolling:'touch'}}>
+        {[['today','📋 आज'],['weekly','📅 Weekly'],['aol','🕉️ AOL'],['garden','🌿 Garden'],['outfit','👗 Outfit'],['calendar','📆 Calendar'],['meals','🍽️ Meals']].map(([v,l])=>(
+          <button key={v} onClick={()=>setView(v)} style={{...S.navBtn, whiteSpace:'nowrap', ...(view===v?S.navActive:{})}}>{l}</button>
         ))}
       </nav>
 
@@ -360,9 +426,9 @@ export default function KirtiRoutine() {
         )}
 
         <div style={S.filterRow}>
-          {['ALL',...Object.keys(AREA_META)].map(a=>(
+          {filterAreas.map(a=>(
             <button key={a} onClick={()=>setActiveFilter(a)}
-              style={{...S.filterChip,...(activeFilter===a?{background:a==='ALL'?TEAL:(AREA_META[a]?.color||'#333'),color:'#fff'}:{})}}>
+              style={{...S.filterChip,...(activeFilter===a?{background:a==='ALL'?TEAL:a==='⚡ Impact'?'#e65100':(AREA_META[a]?.color||'#333'),color:'#fff'}:{})}}>
               {a==='ALL'?'All':a}
             </button>
           ))}
@@ -384,7 +450,15 @@ export default function KirtiRoutine() {
                 return (
                   <div key={t.id} draggable={!selectMode}
                     onDragStart={()=>onDragStart(t.id)} onDragOver={e=>onDragOver(e,t.id)} onDrop={()=>onDrop(t.id)}
-                    style={{...S.taskCard,...(done[t.id]?S.taskDone:{}),...(status==='skipped'?S.taskSkipped:{}),...(status==='missed'?S.taskMissed:{}),...(dragOverId===t.id?S.taskDragOver:{}),...(isSel?S.taskSelected:{}),borderLeftColor:status==='missed'?'#b71c1c':c.accent}}>
+                    style={{
+                      ...S.taskCard,
+                      ...(done[t.id]?S.taskDone:{}),
+                      ...(status==='skipped'?S.taskSkipped:{}),
+                      ...(status==='missed'?S.taskMissed:{}),
+                      ...(dragOverId===t.id?S.taskDragOver:{}),
+                      ...(isSel?S.taskSelected:{}),
+                      borderLeft: t.highImpact ? '4px solid #ffd700' : `4px solid ${status==='missed'?'#b71c1c':c.accent}`,
+                    }}>
                     {editingId===t.id?(
                       <div style={S.editBox}>
                         <input ref={editRef} value={editDraft.time} onChange={e=>setEditDraft({...editDraft,time:e.target.value})} style={S.editInput} placeholder='Time'/>
@@ -412,6 +486,7 @@ export default function KirtiRoutine() {
                         <div style={S.taskContent}>
                           <div style={{...S.taskTime,color:c.accent}}>
                             {t.time} {t.pinned&&'📌'}
+                            {t.highImpact && <span style={{fontSize:10,background:'#ffd700',color:'#7b3f00',padding:'1px 5px',borderRadius:6,fontWeight:800}}>⚡ Impact</span>}
                             {!t.skippable&&<span style={S.reqDot}>⛔</span>}
                             {status==='missed'&&<span style={S.missedBadge}>MISSED</span>}
                             {status==='skipped'&&<span style={S.skippedBadge}>⏭️ SKIP</span>}
@@ -482,6 +557,130 @@ export default function KirtiRoutine() {
       {view==='weekly' && <KirtiWeekly />}
       {view==='aol'    && <KirtiAOL />}
       {view==='garden' && <KirtiGarden />}
+
+      {view==='outfit' && (() => {
+        const dc = DAY_COLORS[new Date().getDay()]
+        const tip = KIRTI_DAY_TIPS[new Date().getDay()]
+        return (
+          <div style={{padding:'16px 14px'}}>
+            <div style={{fontSize:20,fontWeight:800,color:TEAL,marginBottom:4}}>👗 आज का Outfit — किर्ती</div>
+            <div style={{fontSize:12,color:'#888',marginBottom:16}}>Vedic Astrology based daily color guide</div>
+            <div style={{background:`linear-gradient(135deg,${dc.color},${dc.color}cc)`,borderRadius:16,padding:20,color:'#fff',marginBottom:16,textAlign:'center'}}>
+              <div style={{fontSize:28,marginBottom:4}}>{dc.god}</div>
+              <div style={{fontSize:16,fontWeight:800}}>{dc.day} — {dc.en}</div>
+              <div style={{fontSize:22,fontWeight:900,marginTop:8,marginBottom:4}}>{dc.name}</div>
+              <div style={{fontSize:13,opacity:0.9}}>आज का शुभ रंग</div>
+            </div>
+            <div style={{background:'#fff',borderRadius:16,padding:16,marginBottom:12,border:'2px solid #eee'}}>
+              <div style={{fontSize:14,fontWeight:700,color:'#333',marginBottom:10}}>👔 Outfit Suggestions:</div>
+              {dc.outfits.map((o,i)=>(
+                <div key={i} style={{display:'flex',alignItems:'center',gap:8,padding:'8px 0',borderBottom:i<dc.outfits.length-1?'1px solid #f0f0f0':'none'}}>
+                  <div style={{width:12,height:12,borderRadius:'50%',background:dc.color,flexShrink:0}}/>
+                  <span style={{fontSize:14}}>{o}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{background:'#f0f7f4',borderRadius:16,padding:16,marginBottom:12,border:`2px solid ${TEAL}`}}>
+              <div style={{fontSize:13,fontWeight:700,color:'#7b0000',marginBottom:6}}>🌟 Personal Tip — Shani Dasha + Mesh Lagna:</div>
+              <div style={{fontSize:13,color:'#333',lineHeight:1.6}}>{tip}</div>
+            </div>
+            <div style={{background:'#fff0f0',borderRadius:12,padding:12,border:'1px solid #ffcdd2'}}>
+              <div style={{fontSize:13,fontWeight:700,color:'#c62828',marginBottom:4}}>❌ आज Avoid करें:</div>
+              <div style={{fontSize:13,color:'#555'}}>{dc.avoid}</div>
+            </div>
+          </div>
+        )
+      })()}
+
+      {view==='calendar' && (() => {
+        const today = new Date()
+        const MONTH_HI = ['','जनवरी','फरवरी','मार्च','अप्रैल','मई','जून','जुलाई','अगस्त','सितंबर','अक्टूबर','नवंबर','दिसंबर']
+        const withDays = calEvents.map(e=>{
+          const [mm,dd]=e.date.split('-').map(Number)
+          const next=new Date(today.getFullYear(),mm-1,dd)
+          if(next<today&&!(next.getMonth()===today.getMonth()&&next.getDate()===today.getDate())) next.setFullYear(today.getFullYear()+1)
+          return{...e,daysAway:Math.round((next-today)/(864e5)),mm,dd}
+        }).sort((a,b)=>a.daysAway-b.daysAway)
+        const upcoming=withDays.filter(e=>e.daysAway<=60)
+        const byMonth={}
+        calEvents.forEach(e=>{const mm=parseInt(e.date.split('-')[0]);if(!byMonth[mm])byMonth[mm]=[];byMonth[mm].push(e)})
+        const parsed = parseCalText(calInput)
+        return (
+          <div style={{padding:'16px 14px'}}>
+            <div style={{fontSize:20,fontWeight:800,color:TEAL,marginBottom:16}}>📆 परिवार Calendar</div>
+            {upcoming.length>0&&<>
+              <div style={{fontSize:13,fontWeight:700,color:'#555',marginBottom:10}}>🔔 अगले 60 दिनों में ({upcoming.length})</div>
+              {upcoming.map(e=>(
+                <div key={e.id} style={{background:e.daysAway<=7?'#e8f5e9':'#f9f9f9',border:`2px solid ${e.daysAway<=7?TEAL:'#ddd'}`,borderRadius:12,padding:'12px 14px',marginBottom:8}}>
+                  <div style={{fontSize:15,fontWeight:700}}>{e.label}</div>
+                  <div style={{fontSize:12,color:'#888',marginTop:4}}>{MONTH_HI[e.mm]} {e.dd} • {e.daysAway===0?'🎉 आज!':`${e.daysAway} दिन बाद`}</div>
+                </div>
+              ))}
+              <div style={{height:8}}/>
+            </>}
+            <div style={{fontSize:13,fontWeight:700,color:'#555',marginBottom:10}}>📅 सभी Events ({calEvents.length})</div>
+            {Object.keys(byMonth).sort((a,b)=>+a-+b).map(mm=>(
+              <div key={mm} style={{marginBottom:12}}>
+                <div style={{fontSize:11,fontWeight:800,color:TEAL,marginBottom:6,letterSpacing:1}}>{MONTH_HI[+mm].toUpperCase()}</div>
+                {byMonth[mm].sort((a,b)=>a.date.localeCompare(b.date)).map(e=>(
+                  <div key={e.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 10px',background:'#fff',border:'1px solid #eee',borderRadius:8,marginBottom:4}}>
+                    <span style={{fontSize:14}}>{parseInt(e.date.split('-')[1])} — {e.label}</span>
+                    <button onClick={()=>setCalEvents(prev=>prev.filter(x=>x.id!==e.id))} style={{background:'none',border:'none',cursor:'pointer',fontSize:18,color:'#bbb',padding:'0 4px'}}>✕</button>
+                  </div>
+                ))}
+              </div>
+            ))}
+            <div style={{marginTop:16,padding:14,background:'#f0f7f4',borderRadius:12,border:`2px solid ${TEAL}`}}>
+              <div style={{fontSize:13,fontWeight:700,color:'#7b0000',marginBottom:4}}>➕ New Event जोड़ें</div>
+              <div style={{fontSize:11,color:'#888',marginBottom:8}}>Format: "12 January 🧁 Kirti" (एक line = एक event)</div>
+              <textarea value={calInput} onChange={e=>setCalInput(e.target.value)}
+                placeholder={'12 January 🧁Kirti\n31 January 💞 Bhumi-Mukesh\n03 February 💞 Kirti-Sanju'}
+                style={{width:'100%',padding:'10px',borderRadius:8,border:'1px solid #ddd',fontSize:12,fontFamily:'inherit',minHeight:80,boxSizing:'border-box',resize:'vertical'}}/>
+              <button onClick={()=>{if(parsed.length>0){setCalEvents(prev=>[...prev,...parsed]);setCalInput('')}}}
+                style={{marginTop:8,width:'100%',padding:'10px',background:parsed.length>0?TEAL:'#bbb',color:'#fff',border:'none',borderRadius:8,fontWeight:700,fontSize:14,cursor:parsed.length>0?'pointer':'not-allowed'}}>
+                ✓ Calendar में जोड़ें {parsed.length>0?`(${parsed.length} events)`:''}
+              </button>
+            </div>
+          </div>
+        )
+      })()}
+
+      {view==='meals' && (() => {
+        const todayIdx = new Date().getDay()
+        const meal = KIRTI_MEALS[todayIdx]
+        return (
+          <div style={{padding:'16px 14px'}}>
+            <div style={{fontSize:20,fontWeight:800,color:TEAL,marginBottom:4}}>🍽️ Meals — किर्ती</div>
+            <div style={{fontSize:12,color:'#888',marginBottom:16}}>Court 2:00 PM Lunch + AOL/Sattvic आधारित</div>
+            <div style={{background:`linear-gradient(135deg,${TEAL},${GREEN})`,borderRadius:16,padding:16,color:'#fff',marginBottom:16}}>
+              <div style={{fontSize:13,opacity:0.9}}>आज: {meal.day}</div>
+              <div style={{fontSize:15,fontWeight:800,marginTop:4}}>{meal.tip}</div>
+            </div>
+            {[['🌅 नाश्ता (Breakfast)',meal.breakfast,'6:45 AM'],['🍛 दोपहर का खाना (Lunch)',meal.lunch,'2:00 PM'],['🌙 रात का खाना (Dinner)',meal.dinner,'7:45 PM']].map(([title,content,time])=>(
+              <div key={title} style={{background:'#fff',borderRadius:12,padding:16,marginBottom:12,border:'1px solid #eee'}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                  <div style={{fontSize:14,fontWeight:700}}>{title}</div>
+                  <div style={{fontSize:11,color:TEAL,fontWeight:600}}>{time}</div>
+                </div>
+                <div style={{fontSize:13,color:'#444',lineHeight:1.6}}>{content}</div>
+              </div>
+            ))}
+            <div style={{background:'#e8f5e9',borderRadius:12,padding:12,border:`1px solid ${GREEN}`}}>
+              <div style={{fontSize:12,fontWeight:700,color:GREEN,marginBottom:6}}>🌿 Sattvic Diet Rules:</div>
+              <div style={{fontSize:12,color:'#555',lineHeight:1.8}}>✅ सात्विक खाना — हल्का, पौष्टिक{'\n'}✅ तुलसी + हल्दी daily{'\n'}✅ पानी 8 गिलास{'\n'}❌ Rajasic/Tamasic food avoid{'\n'}✅ रात का खाना 8 PM से पहले</div>
+            </div>
+            <div style={{marginTop:16}}>
+              <div style={{fontSize:13,fontWeight:700,color:'#555',marginBottom:8}}>📅 Weekly Meal Plan</div>
+              {KIRTI_MEALS.map((m,i)=>(
+                <div key={i} style={{background:i===todayIdx?'#f0f7f4':'#f9f9f9',border:`1px solid ${i===todayIdx?TEAL:'#eee'}`,borderRadius:10,padding:10,marginBottom:6}}>
+                  <div style={{fontSize:12,fontWeight:800,color:i===todayIdx?TEAL:'#333',marginBottom:4}}>{m.day} {i===todayIdx?'← आज':''}</div>
+                  <div style={{fontSize:11,color:'#666'}}>{m.breakfast}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      })()}
 
       {showCelebrate&&(
         <div style={S.celebOverlay} onClick={()=>setShowCelebrate(false)}>
@@ -623,7 +822,7 @@ const S = {
   progressFill: { background:'#ffd700', height:'100%', borderRadius:8, transition:'width 0.4s' },
   progressText: { fontSize:13, opacity:0.85, marginTop:5, textAlign:'right' },
   nav:          { display:'flex', background:'#fff', borderBottom:'2px solid #e0f2f1', position:'sticky', top:0, zIndex:10 },
-  navBtn:       { flex:1, padding:'13px 4px', border:'none', background:'transparent', fontSize:15, fontWeight:600, color:'#888', cursor:'pointer' },
+  navBtn:       { flex:1, padding:'13px 4px', border:'none', background:'transparent', fontSize:13, fontWeight:600, color:'#888', cursor:'pointer' },
   navActive:    { color:TEAL, borderBottom:`3px solid ${TEAL}` },
   setWrap:      { margin:'8px 10px 0', borderRadius:12, overflow:'hidden', border:'1.5px solid #cce5e0' },
   setToggle:    { width:'100%', display:'flex', alignItems:'center', gap:8, padding:'10px 14px', background:'#f0f7f4', border:'none', cursor:'pointer', fontSize:14, fontWeight:700, color:TEAL },
