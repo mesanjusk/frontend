@@ -41,62 +41,123 @@ const AREA_META = {
   '💪': { label:'Growth',    bg:'#fff8e1', color:'#f57f17' },
 }
 
+// ── Family Calendar (shared across all members)
+const FAMILY_CAL_KEY = 'family_calendar_v1'
+const DEFAULT_CAL_EVENTS = [
+  { id:1,  date:'01-12', label:'🧁 किर्ती का जन्मदिन' },
+  { id:2,  date:'01-31', label:'💞 भूमि-मुकेश Anniversary' },
+  { id:3,  date:'02-03', label:'💞 किर्ती-संजू Anniversary' },
+  { id:4,  date:'03-16', label:'🧁 अनिता जन्मदिन' },
+  { id:5,  date:'03-22', label:'🧁 सपना जन्मदिन' },
+  { id:6,  date:'10-09', label:'🧁 संजू का जन्मदिन' },
+  { id:7,  date:'12-06', label:'🧁 भूमि जन्मदिन' },
+  { id:8,  date:'12-19', label:'💞 सपना-अमर Anniversary' },
+  { id:9,  date:'12-30', label:'🧁 तम्मना जन्मदिन' },
+]
+function loadCalEvents() {
+  try { const s = localStorage.getItem(FAMILY_CAL_KEY); if (s) return JSON.parse(s) } catch {}
+  return DEFAULT_CAL_EVENTS
+}
+function saveCalEvents(ev) {
+  try { localStorage.setItem(FAMILY_CAL_KEY, JSON.stringify(ev)) } catch {}
+}
+function parseCalText(text) {
+  const MONTHS = {january:1,february:2,march:3,april:4,may:5,june:6,july:7,august:8,september:9,october:10,november:11,december:12,jan:1,feb:2,mar:3,apr:4,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12}
+  return text.trim().split('\n').filter(l=>l.trim()).map((line,i)=>{
+    const parts = line.trim().split(/\s+/)
+    const day = parseInt(parts[0])
+    const month = MONTHS[parts[1]?.toLowerCase()]
+    if(!day||!month) return null
+    const label = parts.slice(2).join(' ').trim()
+    if(!label) return null
+    return { id: Date.now()+i, date:`${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`, label }
+  }).filter(Boolean)
+}
+
+// ── Day Colors (Vedic Astrology weekday lords)
+const DAY_COLORS = [
+  { day:'रविवार',   en:'Sunday',    color:'#d46a10', name:'नारंगी / सुनहरा', god:'☀️ सूर्य', outfits:['Orange kurta / shirt','Copper accessories','Golden dupatta / tie'], avoid:'काला / नेवी नीला' },
+  { day:'सोमवार',   en:'Monday',    color:'#90a4ae', name:'सफेद / क्रीम / सिल्वर', god:'🌙 चंद्र', outfits:['White kurta / shirt','Cream colored outfit','Silver accessories'], avoid:'काला / गाढ़ा लाल' },
+  { day:'मंगलवार',  en:'Tuesday',   color:'#c62828', name:'लाल / गुलाबी / कोरल', god:'🔴 मंगल', outfits:['Red kurta / shirt','Coral combination','Pink accessories'], avoid:'हरा / सफेद' },
+  { day:'बुधवार',   en:'Wednesday', color:'#2e7d32', name:'हरा / Grass Green', god:'💚 बुध', outfits:['Green kurta / shirt','Olive combination','Jade accessories'], avoid:'लाल / नारंगी' },
+  { day:'गुरुवार',  en:'Thursday',  color:'#f9a825', name:'पीला / केसरी / सुनहरा', god:'🟡 बृहस्पति', outfits:['Yellow kurta / shirt','Saffron combination','Gold accessories'], avoid:'काला / नेवी' },
+  { day:'शुक्रवार', en:'Friday',    color:'#e91e63', name:'सफेद / गुलाबी / हल्का नीला', god:'🌸 शुक्र', outfits:['White or pink outfit','Light blue combination','Diamond / pearl accessories'], avoid:'काला / गाढ़ा' },
+  { day:'शनिवार',   en:'Saturday',  color:'#263238', name:'काला / नेवी नीला / बैंगनी', god:'🪐 शनि', outfits:['Black / dark blue kurta','Navy combination','Iron / dark accessories'], avoid:'नारंगी / लाल' },
+]
+
+// ── Mahi-specific data
+const MAHI_MEALS = [
+  { id:0, day:'रविवार',   breakfast:'बादाम 5 + दूध + ओट्स + केला (Brain food Sunday)',        lunch:'2 रोटी + पनीर सब्जी + सलाद',        dinner:'दाल चावल + दूध (हल्का)',     tip:'☀️ Creativity day — NIFT sketching के लिए rest!' },
+  { id:1, day:'सोमवार',   breakfast:'अंडा + Brown bread 2 + 1 गिलास दूध',                      lunch:'2 रोटी + दाल + हरी सब्जी + सलाद',  dinner:'खिचड़ी + दही',               tip:'🌙 Focus Monday — Design aptitude study करें' },
+  { id:2, day:'मंगलवार',  breakfast:'बादाम 8 + Fruit bowl + Milk',                               lunch:'2 रोटी + Rajma / Chhole + सलाद',   dinner:'वेजिटेबल सूप + रोटी',        tip:'🔴 Energy day — Portfolio sketch करें!' },
+  { id:3, day:'बुधवार',   breakfast:'Sprouts + Fruit + Green tea (Budh = Intelligence)',          lunch:'2 रोटी + पालक पनीर + दाल',         dinner:'मूंग दाल + चावल',             tip:'💚 Budh Wednesday = Best day for Fashion study + Instagram!' },
+  { id:4, day:'गुरुवार',  breakfast:'Banana shake + बेसन चीला 1',                               lunch:'2 रोटी + चना दाल + आलू-गोभी',      dinner:'दाल सूप + 1 रोटी',            tip:'🟡 Wisdom Thursday — GK + Fashion History पढ़ें' },
+  { id:5, day:'शुक्रवार', breakfast:'Mango / Fruit smoothie + 2 Toast + Egg',                   lunch:'2 रोटी + Paneer / Soya + सलाद',    dinner:'रागी khichdi + दही',           tip:'🌸 SHUKRA Friday = Best Instagram Post Day! Fashion content + 1000+ followers to 10k!' },
+  { id:6, day:'शनिवार',   breakfast:'Poha + Banana + Milk',                                       lunch:'2 रोटी + Mix Veg + दाल',           dinner:'दलिया + दूध',                  tip:'🪐 Saturday = Mock Test day + Portfolio review!' },
+]
+
+const MAHI_DAY_TIPS = [
+  'Tula Lagna = Light Blue/Pink. Sunday = Sketch + rest day. Orange accessories for creativity boost!',
+  'सोमवार = White outfit = Clean, Focused look. Design aptitude day — wear white for concentration।',
+  'मंगलवार = Red elements. Rahu Dasha में bold colors = confidence. Wear a Red accessory today!',
+  'बुधवार = Green! Instagram content में भी green accents trending। Best day for Brand content creation!',
+  'गुरुवार = Yellow/Saffron dupatta या accessories। Saraswati + Guru blessing for NIFT prep!',
+  '🔥 शुक्रवार = Shukra = YOUR POWER DAY! Pink / White OOTD post करो। Max engagement आएगा! 1000+ to 10k!',
+  'शनिवार = Black / Navy accents. Sophisticated look = Fashion Entrepreneur vibes! Mock test + portfolio!',
+]
+
 const MAHI_TASKS = [
-  { id:1,  section:'🌅 सुबह — Spiritual', time:'6:00 AM', task:'उठें — Phone नहीं छूना (Rahu Dasha में discipline = सबसे बड़ा हथियार)', tags:['🕉️'], pinned:false, skippable:false },
-  { id:2,  section:'🌅 सुबह — Spiritual', time:'6:05 AM', task:'गुनगुना पानी — 1 गिलास (तुला लग्न — Digestion priority)', tags:['🏥'], pinned:false, skippable:false },
-  { id:3,  section:'🌅 सुबह — Spiritual', time:'6:10 AM', task:'माँ के साथ तुलसी पूजा — Family bond + Spiritual start', tags:['🕉️','❤️'], pinned:true,  skippable:false },
-  { id:4,  section:'🌅 सुबह — Spiritual', time:'6:18 AM', task:"'ॐ ऐं सरस्वत्यै नमः' — 21 बार (NIFT + Creativity + Studies)", tags:['🕉️','📚'], pinned:false, skippable:false },
-  { id:5,  section:'🌅 सुबह — Spiritual', time:'6:23 AM', task:"'ॐ शुं शुक्राय नमः' — 21 बार (Fashion + Beauty + Brand)", tags:['🕉️','👗'], pinned:false, skippable:true },
-  { id:6,  section:'🌅 सुबह — Spiritual', time:'6:28 AM', task:'Journaling — आज के 3 Goals + 1 NIFT Idea लिखें', tags:['🧠','🎨'], pinned:true,  skippable:false },
-  { id:7,  section:'💪 Yoga + Morning Exercise', time:'6:35 AM', task:'Yoga — सूर्य नमस्कार 6 बार (Warm-up)', tags:['🏥','💪'], pinned:false, skippable:false },
-  { id:8,  section:'💪 Yoga + Morning Exercise', time:'6:45 AM', task:'Yoga Asanas — Vrikshasana, Trikonasana (10 मिनट)', tags:['🏥','💪'], pinned:false, skippable:true },
-  { id:9,  section:'💪 Yoga + Morning Exercise', time:'6:55 AM', task:'Pranayama — अनुलोम विलोम 5 मिनट (Focus + Calm)', tags:['🏥','🧠'], pinned:false, skippable:true },
-  { id:10, section:'💪 Yoga + Morning Exercise', time:'7:02 AM', task:'Stretch + Cool Down — 5 मिनट', tags:['🏥'], pinned:false, skippable:true },
-  { id:11, section:'🍽️ नाश्ता + तैयारी', time:'7:10 AM', task:'नाश्ता — पौष्टिक, Protein + Carb (Growing age, NEVER SKIP)', tags:['🏥'], pinned:true,  skippable:false },
-  { id:12, section:'🍽️ नाश्ता + तैयारी', time:'7:25 AM', task:'School Bag Ready — आज का Timetable Check', tags:['📚'], pinned:false, skippable:true },
-  { id:13, section:'🍽️ नाश्ता + तैयारी', time:'7:35 AM', task:'आज का Outfit Plan — 2 मिनट (Fashion Practice daily)', tags:['👗'], pinned:false, skippable:true },
-  { id:14, section:'🍽️ नाश्ता + तैयारी', time:'7:45 AM', task:'School के लिए निकलें — समय पर', tags:['📚'], pinned:false, skippable:false },
-  { id:15, section:'📚 School — Study Block', time:'8:00 AM',  task:'School — पूरे ध्यान से, Front Row में बैठें', tags:['📚'], pinned:true,  skippable:false },
-  { id:16, section:'📚 School — Study Block', time:'8:00 AM',  task:'उत्तर-पूर्व दिशा में बैठें — Focus और Memory', tags:['📚','🧠'], pinned:false, skippable:true },
-  { id:17, section:'📚 School — Study Block', time:'10:30 AM', task:'School Break — पानी + Healthy snack (Energy बनाए रखें)', tags:['🏥'], pinned:false, skippable:false },
-  { id:18, section:'📚 School — Study Block', time:'12:30 PM', task:'Lunch — School में भी Gratitude, पूरा खाएं (Energy)', tags:['🏥'], pinned:true,  skippable:false },
-  { id:19, section:'📚 School — Study Block', time:'1:00 PM',  task:'Class Notes Review — 10 मिनट (Memory consolidation)', tags:['📚','🧠'], pinned:false, skippable:true },
-  { id:20, section:'🎓 NIFT — Entrance Preparation', time:'2:00 PM', task:'School से घर — 10 मिनट Fresh हों, Snack खाएं', tags:['🏥'], pinned:false, skippable:false },
-  { id:21, section:'🎓 NIFT — Entrance Preparation', time:'2:15 PM', task:'NIFT Prep — Design Aptitude: Shape, Pattern, Composition (20 min)', tags:['🎨','📚'], pinned:true,  skippable:false },
-  { id:22, section:'🎓 NIFT — Entrance Preparation', time:'2:35 PM', task:'NIFT Prep — Fashion Sketching: 1 Figure + Garment (25 min)', tags:['🎨','👗'], pinned:false, skippable:false },
-  { id:23, section:'🎓 NIFT — Entrance Preparation', time:'3:00 PM', task:'NIFT Prep — English: Reading Comprehension या Vocabulary (20 min)', tags:['📚','🧠'], pinned:false, skippable:false },
-  { id:24, section:'🎓 NIFT — Entrance Preparation', time:'3:20 PM', task:'NIFT Prep — GK: Fashion History, Art, Current Affairs (20 min)', tags:['📚','🧠'], pinned:false, skippable:false },
-  { id:25, section:'🎓 NIFT — Entrance Preparation', time:'3:40 PM', task:'NIFT Situation Test Practice — Draping / Material Handling', tags:['🎨','💪'], pinned:false, skippable:true },
-  { id:26, section:'🎓 NIFT — Entrance Preparation', time:'3:55 PM', task:'NIFT Mock Test — 1 Previous Year Paper Section Review', tags:['📚'], pinned:false, skippable:true },
-  { id:27, section:'🏫 Coaching Classes', time:'4:00 PM', task:'Coaching Class — पूरे ध्यान से, Notes लें', tags:['📚','🧠'], pinned:true,  skippable:false },
-  { id:28, section:'🏫 Coaching Classes', time:'4:00 PM', task:'Coaching का Homework — उसी दिन करें, कल पर नहीं', tags:['📚'], pinned:false, skippable:true },
-  { id:29, section:'🏫 Coaching Classes', time:'5:00 PM', task:'Coaching Notes Revise — 15 मिनट (आते-आते)', tags:['📚','🧠'], pinned:false, skippable:true },
-  { id:30, section:'🎨 Creative Block', time:'5:30 PM', task:'School + Coaching Homework Complete — First (पढ़ाई Priority)', tags:['📚'], pinned:true,  skippable:false },
-  { id:31, section:'🎨 Creative Block', time:'6:00 PM', task:'Fashion Research — Pinterest, Vogue, Masaba, Raw Mango 20 min', tags:['👗','🎨'], pinned:false, skippable:true },
-  { id:32, section:'🎨 Creative Block', time:'6:20 PM', task:'Mood Board Update — Canva या Sketch Book (Exam portfolio के लिए)', tags:['🎨','👗'], pinned:false, skippable:true },
-  { id:33, section:'🎨 Creative Block', time:'6:40 PM', task:'1 NIFT Design Sketch — अच्छा बनाएं, Date लिखें (Portfolio)', tags:['🎨','👗'], pinned:false, skippable:true },
-  { id:34, section:'📱 Instagram + Brand', time:'7:00 PM', task:'आज का Content Plan — 1 Reel / Post Idea Note करें', tags:['📱','🎨'], pinned:false, skippable:true },
-  { id:35, section:'📱 Instagram + Brand', time:'7:10 PM', task:'Content Create — Photo / Video (शुक्रवार को Best Post)', tags:['📱'], pinned:false, skippable:true },
-  { id:36, section:'📱 Instagram + Brand', time:'7:25 PM', task:'Cousin के साथ Brand Planning Call — हफ्ते में 1 बार', tags:['📱','❤️'], pinned:false, skippable:true },
-  { id:37, section:'❤️ परिवार + Grounding', time:'6:00 PM', task:'माँ के साथ बगीचे में — 15 मिनट (Grounding रोज जरूरी)', tags:['❤️','🏥'], pinned:true,  skippable:false },
-  { id:38, section:'❤️ परिवार + Grounding', time:'7:30 PM', task:'परिवार Time — Phone रखें, घर में रहें, बात करें', tags:['❤️'], pinned:false, skippable:true },
-  { id:39, section:'❤️ परिवार + Grounding', time:'7:45 PM', task:'Papa के साथ — NIFT progress share करें, Business insight लें', tags:['❤️'], pinned:false, skippable:true },
-  { id:40, section:'❤️ परिवार + Grounding', time:'8:00 PM', task:'Family Dinner — तीनों साथ, Phone नहीं, Gratitude', tags:['❤️','🏥'], pinned:true,  skippable:false },
-  { id:41, section:'❤️ परिवार + Grounding', time:'8:25 PM', task:'दिन की 1 अच्छी बात — हर कोई बोले', tags:['❤️','🕉️'], pinned:false, skippable:true },
-  { id:42, section:'🌙 रात — Wind Down', time:'8:30 PM', task:'कल का NIFT Study Plan लिखें — Topic + Time', tags:['📚','🧠'], pinned:true,  skippable:false },
-  { id:43, section:'🌙 रात — Wind Down', time:'8:40 PM', task:'Fashion / Design Book पढ़ें — 15 मिनट (Screen नहीं)', tags:['📚','👗'], pinned:false, skippable:true },
-  { id:44, section:'🌙 रात — Wind Down', time:'8:55 PM', task:'Gratitude Journal — आज 3 अच्छी बातें + कल के 3 Goals', tags:['🕉️','🧠'], pinned:false, skippable:true },
-  { id:45, section:'🌙 रात — Wind Down', time:'9:05 PM', task:'Screen Time बंद — आंखों के लिए (NIFT drawing के लिए आंखें चाहिए)', tags:['🏥'], pinned:true,  skippable:false },
-  { id:46, section:'🌙 रात — Wind Down', time:'9:15 PM', task:"माँ को 'Good night' करें — Connection रोज़ जरूरी", tags:['❤️'], pinned:false, skippable:true },
-  { id:47, section:'🌙 रात — Wind Down', time:'9:20 PM', task:"'ॐ ऐं सरस्वत्यै नमः' — 5 बार (सोने से पहले)", tags:['🕉️'], pinned:false, skippable:true },
-  { id:48, section:'🌙 रात — Wind Down', time:'9:30 PM', task:'सोएं — 9 घंटे (Growing age + NIFT prep = fresh mind जरूरी)', tags:['🏥'], pinned:true,  skippable:false },
+  // 🌅 सुबह — Spiritual (6:00 - 6:30 AM)
+  { id:1,  section:'🌅 सुबह — Spiritual', time:'6:00 AM', task:'उठें — Phone नहीं (Rahu Dasha = Discipline आपका सबसे बड़ा हथियार है)', tags:['🕉️'], pinned:false, skippable:false, highImpact:false },
+  { id:2,  section:'🌅 सुबह — Spiritual', time:'6:05 AM', task:'गुनगुना पानी + माँ के साथ तुलसी पूजा — Family bond + Spiritual start', tags:['🏥','🕉️','❤️'], pinned:true, skippable:false, highImpact:false },
+  { id:4,  section:'🌅 सुबह — Spiritual', time:'6:15 AM', task:"'ॐ ऐं सरस्वत्यै नमः' 21 बार + 'ॐ शुं शुक्राय नमः' 21 बार (NIFT + Fashion)", tags:['🕉️','📚','👗'], pinned:false, skippable:false, highImpact:false },
+  { id:6,  section:'🌅 सुबह — Spiritual', time:'6:30 AM', task:'Journaling — आज के 3 NIFT Goals + 1 Fashion Design Idea लिखें', tags:['🧠','🎨'], pinned:true, skippable:false, highImpact:true },
+  // 💪 Yoga + Morning Exercise (6:45 - 7:15 AM)
+  { id:7,  section:'💪 Yoga + Morning Exercise', time:'6:45 AM', task:'Yoga — सूर्य नमस्कार 6 बार + Vrikshasana + Trikonasana (15 min)', tags:['🏥','💪'], pinned:false, skippable:false, highImpact:false },
+  { id:9,  section:'💪 Yoga + Morning Exercise', time:'7:00 AM', task:'Pranayama — अनुलोम विलोम 5 मिनट + Stretch (Focus + Calm = NIFT Exam Ready)', tags:['🏥','🧠'], pinned:false, skippable:true, highImpact:false },
+  // 🍽️ नाश्ता + तैयारी (7:15 - 7:30 AM)
+  { id:11, section:'🍽️ नाश्ता + तैयारी', time:'7:15 AM', task:'नाश्ता — पौष्टिक: बादाम 5 + अंडा/पनीर + दूध + Fruit (Brain food for NIFT prep)', tags:['🏥'], pinned:true, skippable:false, highImpact:false },
+  { id:13, section:'🍽️ नाश्ता + तैयारी', time:'7:30 AM', task:'आज का Outfit Plan — 2 मिनट fashion practice (You are a Fashion Entrepreneur!)', tags:['👗'], pinned:false, skippable:true, highImpact:false },
+  // 🎓 NIFT — Entrance Preparation (7:45 AM - 12:00 PM)
+  { id:21, section:'🎓 NIFT — Entrance Preparation', time:'7:45 AM', task:'NIFT DEEP STUDY — Design Aptitude: Shapes, Pattern, Composition, 2D/3D (30 min)', tags:['🎨','📚'], pinned:true, skippable:false, highImpact:true },
+  { id:22, section:'🎓 NIFT — Entrance Preparation', time:'8:15 AM', task:'Fashion Sketching — 1 Complete Figure + Garment Details (25 min, Portfolio build)', tags:['🎨','👗'], pinned:false, skippable:false, highImpact:true },
+  { id:23, section:'🎓 NIFT — Entrance Preparation', time:'8:45 AM', task:'English — Reading Comprehension + Vocabulary (20 min, NIFT written test)', tags:['📚','🧠'], pinned:false, skippable:false, highImpact:false },
+  { id:24, section:'🎓 NIFT — Entrance Preparation', time:'9:15 AM', task:'GK + Fashion History — Current Affairs + Art History + Designers (20 min)', tags:['📚','🧠'], pinned:false, skippable:false, highImpact:false },
+  { id:25, section:'🎓 NIFT — Entrance Preparation', time:'9:45 AM', task:'Situation Test Practice — Draping / Material Handling / 3D creation (30 min)', tags:['🎨','💪'], pinned:false, skippable:true, highImpact:false },
+  { id:26, section:'🎓 NIFT — Entrance Preparation', time:'10:15 AM', task:'NIFT Mock Test — Previous Year Paper Section (25 min, Time yourself)', tags:['📚'], pinned:false, skippable:true, highImpact:true },
+  { id:19, section:'🎓 NIFT — Entrance Preparation', time:'10:45 AM', task:'Break + Healthy Snack + पानी + 5 min Eyes Rest (आंखें NIFT के लिए precious)', tags:['🏥'], pinned:false, skippable:false, highImpact:false },
+  { id:20, section:'🎓 NIFT — Entrance Preparation', time:'11:00 AM', task:'NIFT Study Revision — Morning का सब Revise करें + 1 Sketch Portfolio entry', tags:['🎨','📚'], pinned:false, skippable:true, highImpact:false },
+  // 🏫 Coaching Classes (12:00 PM - 2:00 PM)
+  { id:18, section:'🏫 Coaching Classes', time:'12:00 PM', task:'Lunch — पोषण = Energy = NIFT performance (घर का खाना, पूरा खाएं)', tags:['🏥'], pinned:true, skippable:false, highImpact:false },
+  { id:27, section:'🏫 Coaching Classes', time:'12:30 PM', task:'Coaching Class — पूरे ध्यान से, Front पर बैठें, Notes लें (Hacks from teacher!)', tags:['📚','🧠'], pinned:true, skippable:false, highImpact:true },
+  { id:28, section:'🏫 Coaching Classes', time:'2:00 PM', task:'Coaching Homework — उसी दिन करें (3 दिन बाद काम का नहीं रहता)', tags:['📚'], pinned:false, skippable:true, highImpact:false },
+  { id:29, section:'🏫 Coaching Classes', time:'2:15 PM', task:'Coaching Notes Revise — 15 min (Spaced repetition = NIFT rank improve)', tags:['📚','🧠'], pinned:false, skippable:true, highImpact:false },
+  // 🎨 Creative Block (2:30 - 5:30 PM)
+  { id:30, section:'🎨 Creative Block', time:'2:30 PM', task:'Fashion Research — Pinterest, Vogue India, Masaba, Raw Mango (20 min)', tags:['👗','🎨'], pinned:false, skippable:true, highImpact:false },
+  { id:32, section:'🎨 Creative Block', time:'2:45 PM', task:'Mood Board Update — Canva या Sketch Book (NIFT Exam Portfolio के लिए)', tags:['🎨','👗'], pinned:false, skippable:true, highImpact:false },
+  { id:33, section:'🎨 Creative Block', time:'3:00 PM', task:'1 NIFT Design Sketch — Original, Date लिखें, Portfolio में Add करें', tags:['🎨','👗'], pinned:false, skippable:true, highImpact:true },
+  { id:36, section:'🎨 Creative Block', time:'3:15 PM', task:'Cousin के साथ Fashion Brand call — हफ्ते में 1 बार (Brand = Future)', tags:['📱','❤️'], pinned:false, skippable:true, highImpact:false },
+  // 📱 Instagram + Brand (3:30 - 5:30 PM)
+  { id:34, section:'📱 Instagram + Brand', time:'3:30 PM', task:'Instagram Content Plan — 1 Reel / Post Idea (Already 1000+ Followers! Grow to 10k)', tags:['📱','🎨'], pinned:false, skippable:true, highImpact:true },
+  { id:35, section:'📱 Instagram + Brand', time:'3:45 PM', task:'Content Create — Photo / Video / Reel (शुक्रवार = Best post day for Shukra)', tags:['📱'], pinned:false, skippable:true, highImpact:false },
+  { id:31, section:'📱 Instagram + Brand', time:'4:00 PM', task:'Engage with followers — Reply to comments + DMs (Community build करें)', tags:['📱'], pinned:false, skippable:true, highImpact:false },
+  // ❤️ परिवार + Grounding (5:30 - 8:00 PM)
+  { id:37, section:'❤️ परिवार + Grounding', time:'5:30 PM', task:'माँ के साथ बगीचे में — 15 मिनट (Grounding रोज़ = Rahu Dasha में anchor)', tags:['❤️','🏥'], pinned:true, skippable:false, highImpact:false },
+  { id:38, section:'❤️ परिवार + Grounding', time:'5:45 PM', task:'Papa के साथ — NIFT progress + Business insight (Papa = Best Mentor)', tags:['❤️'], pinned:false, skippable:true, highImpact:false },
+  { id:40, section:'❤️ परिवार + Grounding', time:'7:00 PM', task:'Family Dinner — तीनों साथ, Phone नहीं, 1 Gratitude बात सबसे', tags:['❤️','🏥'], pinned:true, skippable:false, highImpact:true },
+  // 🌙 रात — Wind Down (8:00 - 9:30 PM)
+  { id:42, section:'🌙 रात — Wind Down', time:'8:00 PM', task:'कल का NIFT Study Plan — Topic, Time Block, Target (Written plan = 80% done)', tags:['📚','🧠'], pinned:true, skippable:false, highImpact:true },
+  { id:43, section:'🌙 रात — Wind Down', time:'8:15 PM', task:'Fashion / Design Book पढ़ें — 15 min (Screen नहीं, Actual book)', tags:['📚','👗'], pinned:false, skippable:true, highImpact:false },
+  { id:44, section:'🌙 रात — Wind Down', time:'8:30 PM', task:'Gratitude Journal — आज 3 अच्छी बातें + कल के 3 NIFT Goals', tags:['🕉️','🧠'], pinned:false, skippable:true, highImpact:false },
+  { id:45, section:'🌙 रात — Wind Down', time:'8:45 PM', task:'Screen Time बंद + माँ को Good Night (आंखें + Connection रोज़)', tags:['🏥','❤️'], pinned:true, skippable:false, highImpact:false },
+  { id:47, section:'🌙 रात — Wind Down', time:'9:00 PM', task:"'ॐ ऐं सरस्वत्यै नमः' 5 बार (सोने से पहले, NIFT में Saraswati की कृपा)", tags:['🕉️'], pinned:false, skippable:true, highImpact:false },
+  { id:48, section:'🌙 रात — Wind Down', time:'9:30 PM', task:'सोएं — 8-9 घंटे (Growing age + NIFT prep = Fresh brain daily ज़रूरी)', tags:['🏥'], pinned:true, skippable:false, highImpact:false },
 ]
 
 const SECTION_COLORS = {
   '🌅 सुबह — Spiritual':           { bg:'#fff5e6', accent:'#d46a10' },
   '💪 Yoga + Morning Exercise':     { bg:'#e8f5e9', accent:'#2e7d32' },
   '🍽️ नाश्ता + तैयारी':            { bg:'#fff8e1', accent:'#f57f17' },
-  '📚 School — Study Block':        { bg:'#e8eaf6', accent:'#1a237e' },
   '🎓 NIFT — Entrance Preparation': { bg:'#fce4ec', accent:'#c2185b' },
   '🏫 Coaching Classes':            { bg:'#e3f2fd', accent:'#1565c0' },
   '🎨 Creative Block':              { bg:'#f3e5f5', accent:'#6a1b9a' },
@@ -138,9 +199,12 @@ export default function MahiRoutine() {
   const [selectMode, setSelectMode] = useState(false)
   const [selected, setSelected]     = useState(new Set())
   const [mergeForm, setMergeForm]   = useState(null)
+  const [calEvents, setCalEvents] = useState(loadCalEvents)
+  const [calInput,  setCalInput]  = useState('')
   const editRef = useRef(null)
 
   useEffect(() => { saveState({ tasks, done, settings }) }, [tasks, done, settings])
+  useEffect(() => { saveCalEvents(calEvents) }, [calEvents])
 
   const sections   = [...new Set(tasks.map(t => t.section))]
   const todayDone  = Object.values(done).filter(Boolean).length
@@ -244,8 +308,9 @@ export default function MahiRoutine() {
   }
   const sc = sec => SECTION_COLORS[sec] || { bg:'#f9f9f9', accent:PINK }
 
+  const filterAreas = ['ALL', '⚡ Impact', ...Object.keys(AREA_META)]
   const filtered = tasks.filter(t => {
-    const aOk = activeFilter === 'ALL' || t.tags.includes(activeFilter)
+    const aOk = activeFilter === 'ALL' || (activeFilter === '⚡ Impact' ? t.highImpact : t.tags.includes(activeFilter))
     const sOk = !searchQ || t.task.toLowerCase().includes(searchQ.toLowerCase()) || t.time.includes(searchQ)
     return aOk && sOk
   })
@@ -275,9 +340,9 @@ export default function MahiRoutine() {
         <div style={S.progressText}>{todayDone} / {todayTotal} tasks complete</div>
       </header>
 
-      <nav style={S.nav}>
-        {[['today','📋 आज'],['weekly','📅 Weekly'],['brand','👗 Brand'],['mantras','🕉️ Mantras']].map(([v,l])=>(
-          <button key={v} onClick={()=>setView(v)} style={{...S.navBtn,...(view===v?S.navActive:{})}}>{l}</button>
+      <nav style={{...S.nav, overflowX:'auto', scrollbarWidth:'none', WebkitOverflowScrolling:'touch'}}>
+        {[['today','📋 आज'],['weekly','📅 Weekly'],['brand','👗 Brand'],['mantras','🕉️ Mantras'],['outfit','💃 Outfit'],['calendar','📆 Calendar'],['meals','🍽️ Meals']].map(([v,l])=>(
+          <button key={v} onClick={()=>setView(v)} style={{...S.navBtn, whiteSpace:'nowrap', ...(view===v?S.navActive:{})}}>{l}</button>
         ))}
       </nav>
 
@@ -355,9 +420,9 @@ export default function MahiRoutine() {
         )}
 
         <div style={S.filterRow}>
-          {['ALL',...Object.keys(AREA_META)].map(a=>(
+          {filterAreas.map(a=>(
             <button key={a} onClick={()=>setActiveFilter(a)}
-              style={{...S.filterChip,...(activeFilter===a?{background:a==='ALL'?PINK:(AREA_META[a]?.color||'#333'),color:'#fff'}:{})}}>
+              style={{...S.filterChip,...(activeFilter===a?{background:a==='ALL'?PINK:a==='⚡ Impact'?'#e65100':(AREA_META[a]?.color||'#333'),color:'#fff'}:{})}}>
               {a==='ALL'?'All':a}
             </button>
           ))}
@@ -379,7 +444,15 @@ export default function MahiRoutine() {
                 return (
                   <div key={t.id} draggable={!selectMode}
                     onDragStart={()=>onDragStart(t.id)} onDragOver={e=>onDragOver(e,t.id)} onDrop={()=>onDrop(t.id)}
-                    style={{...S.taskCard,...(done[t.id]?S.taskDone:{}),...(status==='skipped'?S.taskSkipped:{}),...(status==='missed'?S.taskMissed:{}),...(dragOverId===t.id?S.taskDragOver:{}),...(isSel?S.taskSelected:{}),borderLeftColor:status==='missed'?'#b71c1c':c.accent}}>
+                    style={{
+                      ...S.taskCard,
+                      ...(done[t.id]?S.taskDone:{}),
+                      ...(status==='skipped'?S.taskSkipped:{}),
+                      ...(status==='missed'?S.taskMissed:{}),
+                      ...(dragOverId===t.id?S.taskDragOver:{}),
+                      ...(isSel?S.taskSelected:{}),
+                      borderLeft: t.highImpact ? '4px solid #ffd700' : `4px solid ${status==='missed'?'#b71c1c':c.accent}`,
+                    }}>
                     {editingId===t.id?(
                       <div style={S.editBox}>
                         <input ref={editRef} value={editDraft.time} onChange={e=>setEditDraft({...editDraft,time:e.target.value})} style={S.editInput} placeholder='Time'/>
@@ -407,6 +480,7 @@ export default function MahiRoutine() {
                         <div style={S.taskContent}>
                           <div style={{...S.taskTime,color:c.accent}}>
                             {t.time} {t.pinned&&'📌'}
+                            {t.highImpact && <span style={{fontSize:10,background:'#ffd700',color:'#7b3f00',padding:'1px 5px',borderRadius:6,fontWeight:800}}>⚡ Impact</span>}
                             {!t.skippable&&<span style={S.reqDot}>⛔</span>}
                             {status==='missed'&&<span style={S.missedBadge}>MISSED</span>}
                             {status==='skipped'&&<span style={S.skippedBadge}>⏭️ SKIP</span>}
@@ -478,6 +552,130 @@ export default function MahiRoutine() {
       {view==='brand'   && <MahiBrand />}
       {view==='mantras' && <MahiMantras />}
 
+      {view==='outfit' && (() => {
+        const dc = DAY_COLORS[new Date().getDay()]
+        const tip = MAHI_DAY_TIPS[new Date().getDay()]
+        return (
+          <div style={{padding:'16px 14px'}}>
+            <div style={{fontSize:20,fontWeight:800,color:PINK,marginBottom:4}}>💃 आज का Outfit — माही</div>
+            <div style={{fontSize:12,color:'#888',marginBottom:16}}>Vedic Astrology based daily color guide</div>
+            <div style={{background:`linear-gradient(135deg,${dc.color},${dc.color}cc)`,borderRadius:16,padding:20,color:'#fff',marginBottom:16,textAlign:'center'}}>
+              <div style={{fontSize:28,marginBottom:4}}>{dc.god}</div>
+              <div style={{fontSize:16,fontWeight:800}}>{dc.day} — {dc.en}</div>
+              <div style={{fontSize:22,fontWeight:900,marginTop:8,marginBottom:4}}>{dc.name}</div>
+              <div style={{fontSize:13,opacity:0.9}}>आज का शुभ रंग</div>
+            </div>
+            <div style={{background:'#fff',borderRadius:16,padding:16,marginBottom:12,border:'2px solid #eee'}}>
+              <div style={{fontSize:14,fontWeight:700,color:'#333',marginBottom:10}}>👗 Outfit Suggestions:</div>
+              {dc.outfits.map((o,i)=>(
+                <div key={i} style={{display:'flex',alignItems:'center',gap:8,padding:'8px 0',borderBottom:i<dc.outfits.length-1?'1px solid #f0f0f0':'none'}}>
+                  <div style={{width:12,height:12,borderRadius:'50%',background:dc.color,flexShrink:0}}/>
+                  <span style={{fontSize:14}}>{o}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{background:'#fdf5f7',borderRadius:16,padding:16,marginBottom:12,border:`2px solid ${PINK}`}}>
+              <div style={{fontSize:13,fontWeight:700,color:'#7b0000',marginBottom:6}}>🌟 Personal Tip — Rahu Dasha + Tula Lagna:</div>
+              <div style={{fontSize:13,color:'#333',lineHeight:1.6}}>{tip}</div>
+            </div>
+            <div style={{background:'#fff0f0',borderRadius:12,padding:12,border:'1px solid #ffcdd2'}}>
+              <div style={{fontSize:13,fontWeight:700,color:'#c62828',marginBottom:4}}>❌ आज Avoid करें:</div>
+              <div style={{fontSize:13,color:'#555'}}>{dc.avoid}</div>
+            </div>
+          </div>
+        )
+      })()}
+
+      {view==='calendar' && (() => {
+        const today = new Date()
+        const MONTH_HI = ['','जनवरी','फरवरी','मार्च','अप्रैल','मई','जून','जुलाई','अगस्त','सितंबर','अक्टूबर','नवंबर','दिसंबर']
+        const withDays = calEvents.map(e=>{
+          const [mm,dd]=e.date.split('-').map(Number)
+          const next=new Date(today.getFullYear(),mm-1,dd)
+          if(next<today&&!(next.getMonth()===today.getMonth()&&next.getDate()===today.getDate())) next.setFullYear(today.getFullYear()+1)
+          return{...e,daysAway:Math.round((next-today)/(864e5)),mm,dd}
+        }).sort((a,b)=>a.daysAway-b.daysAway)
+        const upcoming=withDays.filter(e=>e.daysAway<=60)
+        const byMonth={}
+        calEvents.forEach(e=>{const mm=parseInt(e.date.split('-')[0]);if(!byMonth[mm])byMonth[mm]=[];byMonth[mm].push(e)})
+        const parsed = parseCalText(calInput)
+        return (
+          <div style={{padding:'16px 14px'}}>
+            <div style={{fontSize:20,fontWeight:800,color:PINK,marginBottom:16}}>📆 परिवार Calendar</div>
+            {upcoming.length>0&&<>
+              <div style={{fontSize:13,fontWeight:700,color:'#555',marginBottom:10}}>🔔 अगले 60 दिनों में ({upcoming.length})</div>
+              {upcoming.map(e=>(
+                <div key={e.id} style={{background:e.daysAway<=7?'#fce4ec':'#f9f9f9',border:`2px solid ${e.daysAway<=7?PINK:'#ddd'}`,borderRadius:12,padding:'12px 14px',marginBottom:8}}>
+                  <div style={{fontSize:15,fontWeight:700}}>{e.label}</div>
+                  <div style={{fontSize:12,color:'#888',marginTop:4}}>{MONTH_HI[e.mm]} {e.dd} • {e.daysAway===0?'🎉 आज!':`${e.daysAway} दिन बाद`}</div>
+                </div>
+              ))}
+              <div style={{height:8}}/>
+            </>}
+            <div style={{fontSize:13,fontWeight:700,color:'#555',marginBottom:10}}>📅 सभी Events ({calEvents.length})</div>
+            {Object.keys(byMonth).sort((a,b)=>+a-+b).map(mm=>(
+              <div key={mm} style={{marginBottom:12}}>
+                <div style={{fontSize:11,fontWeight:800,color:PINK,marginBottom:6,letterSpacing:1}}>{MONTH_HI[+mm].toUpperCase()}</div>
+                {byMonth[mm].sort((a,b)=>a.date.localeCompare(b.date)).map(e=>(
+                  <div key={e.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 10px',background:'#fff',border:'1px solid #eee',borderRadius:8,marginBottom:4}}>
+                    <span style={{fontSize:14}}>{parseInt(e.date.split('-')[1])} — {e.label}</span>
+                    <button onClick={()=>setCalEvents(prev=>prev.filter(x=>x.id!==e.id))} style={{background:'none',border:'none',cursor:'pointer',fontSize:18,color:'#bbb',padding:'0 4px'}}>✕</button>
+                  </div>
+                ))}
+              </div>
+            ))}
+            <div style={{marginTop:16,padding:14,background:'#fdf5f7',borderRadius:12,border:`2px solid ${PINK}`}}>
+              <div style={{fontSize:13,fontWeight:700,color:'#7b0000',marginBottom:4}}>➕ New Event जोड़ें</div>
+              <div style={{fontSize:11,color:'#888',marginBottom:8}}>Format: "12 January 🧁 Kirti" (एक line = एक event)</div>
+              <textarea value={calInput} onChange={e=>setCalInput(e.target.value)}
+                placeholder={'12 January 🧁Kirti\n31 January 💞 Bhumi-Mukesh\n03 February 💞 Kirti-Sanju'}
+                style={{width:'100%',padding:'10px',borderRadius:8,border:'1px solid #ddd',fontSize:12,fontFamily:'inherit',minHeight:80,boxSizing:'border-box',resize:'vertical'}}/>
+              <button onClick={()=>{if(parsed.length>0){setCalEvents(prev=>[...prev,...parsed]);setCalInput('')}}}
+                style={{marginTop:8,width:'100%',padding:'10px',background:parsed.length>0?PINK:'#bbb',color:'#fff',border:'none',borderRadius:8,fontWeight:700,fontSize:14,cursor:parsed.length>0?'pointer':'not-allowed'}}>
+                ✓ Calendar में जोड़ें {parsed.length>0?`(${parsed.length} events)`:''}
+              </button>
+            </div>
+          </div>
+        )
+      })()}
+
+      {view==='meals' && (() => {
+        const todayIdx = new Date().getDay()
+        const meal = MAHI_MEALS[todayIdx]
+        return (
+          <div style={{padding:'16px 14px'}}>
+            <div style={{fontSize:20,fontWeight:800,color:PINK,marginBottom:4}}>🍽️ Meals — माही</div>
+            <div style={{fontSize:12,color:'#888',marginBottom:16}}>NIFT prep + Growing age + Rahu Dasha आधारित</div>
+            <div style={{background:`linear-gradient(135deg,${PINK},${DPINK})`,borderRadius:16,padding:16,color:'#fff',marginBottom:16}}>
+              <div style={{fontSize:13,opacity:0.9}}>आज: {meal.day}</div>
+              <div style={{fontSize:15,fontWeight:800,marginTop:4}}>{meal.tip}</div>
+            </div>
+            {[['🌅 नाश्ता (Breakfast)',meal.breakfast,'7:15 AM'],['🍛 दोपहर का खाना (Lunch)',meal.lunch,'12:00 PM'],['🌙 रात का खाना (Dinner)',meal.dinner,'7:00 PM']].map(([title,content,time])=>(
+              <div key={title} style={{background:'#fff',borderRadius:12,padding:16,marginBottom:12,border:'1px solid #eee'}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                  <div style={{fontSize:14,fontWeight:700}}>{title}</div>
+                  <div style={{fontSize:11,color:PINK,fontWeight:600}}>{time}</div>
+                </div>
+                <div style={{fontSize:13,color:'#444',lineHeight:1.6}}>{content}</div>
+              </div>
+            ))}
+            <div style={{background:'#fce4ec',borderRadius:12,padding:12,border:`1px solid ${DPINK}`}}>
+              <div style={{fontSize:12,fontWeight:700,color:DPINK,marginBottom:6}}>🎯 NIFT Prep Brain Food:</div>
+              <div style={{fontSize:12,color:'#555',lineHeight:1.8}}>✅ बादाम 5-8 रोज (Memory + Focus){'\n'}✅ हरी सब्जी daily (Creativity){'\n'}✅ दूध रात को (Sleep quality){'\n'}✅ पानी 8 गिलास (Eye + Skin){'\n'}❌ Junk food avoid (Energy crash)</div>
+            </div>
+            <div style={{marginTop:16}}>
+              <div style={{fontSize:13,fontWeight:700,color:'#555',marginBottom:8}}>📅 Weekly Meal Plan</div>
+              {MAHI_MEALS.map((m,i)=>(
+                <div key={i} style={{background:i===todayIdx?'#fdf5f7':'#f9f9f9',border:`1px solid ${i===todayIdx?PINK:'#eee'}`,borderRadius:10,padding:10,marginBottom:6}}>
+                  <div style={{fontSize:12,fontWeight:800,color:i===todayIdx?PINK:'#333',marginBottom:4}}>{m.day} {i===todayIdx?'← आज':''}</div>
+                  <div style={{fontSize:11,color:'#666'}}>{m.breakfast}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      })()}
+
       {showCelebrate&&(
         <div style={S.celebOverlay} onClick={()=>setShowCelebrate(false)}>
           <div style={S.celebBox}>
@@ -519,9 +717,9 @@ function MahiWeekly() {
 
 function MahiBrand() {
   const milestones = [
-    { year:'अभी', goal:'Instagram Account शुरू करें — Fashion niche', status:'🟡', color:'#f57f17' },
+    { year:'अभी', goal:'Instagram Account — Fashion niche (Already 1000+ Followers!)', status:'🟡', color:'#f57f17' },
     { year:'2025', goal:'NIFT/Pearl Academy — Fashion Communication Admission', status:'🎯', color:'#1a237e' },
-    { year:'2026', goal:'पहले 1000 Genuine Followers', status:'📈', color:'#00695c' },
+    { year:'2026', goal:'10,000 Genuine Followers — Fashion Brand Identity', status:'📈', color:'#00695c' },
     { year:'2027', goal:'Cousin के साथ Brand Partnership official', status:'👥', color:'#6a1b9a' },
     { year:'2028', goal:'Internship — Vogue/Myntra/Nykaa Fashion', status:'💼', color:'#880e4f' },
     { year:'2029', goal:'Graduate + Brand Soft Launch', status:'🚀', color:'#c2185b' },
@@ -596,7 +794,7 @@ const S = {
   progressFill: { background:'#ffd700', height:'100%', borderRadius:8, transition:'width 0.4s' },
   progressText: { fontSize:13, opacity:0.85, marginTop:5, textAlign:'right' },
   nav:          { display:'flex', background:'#fff', borderBottom:'2px solid #f8e0e8', position:'sticky', top:0, zIndex:10 },
-  navBtn:       { flex:1, padding:'13px 4px', border:'none', background:'transparent', fontSize:15, fontWeight:600, color:'#888', cursor:'pointer' },
+  navBtn:       { flex:1, padding:'13px 4px', border:'none', background:'transparent', fontSize:13, fontWeight:600, color:'#888', cursor:'pointer' },
   navActive:    { color:PINK, borderBottom:`3px solid ${PINK}` },
   setWrap:      { margin:'8px 10px 0', borderRadius:12, overflow:'hidden', border:'1.5px solid #f0c0d0' },
   setToggle:    { width:'100%', display:'flex', alignItems:'center', gap:8, padding:'10px 14px', background:'#fdf5f7', border:'none', cursor:'pointer', fontSize:14, fontWeight:700, color:PINK },
